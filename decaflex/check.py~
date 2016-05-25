@@ -59,7 +59,6 @@ class Check:
                     if len(diff_lines) > 0:
                         logging.info("Diff between reference and your output for {0}".format(testfile_key))
                         logging.info("{0}{1}".format(self.linesep, self.linesep.join(list(diff_lines))))
-                        print filename
                     else:
                         tally['score'] += score
                         tally['num_correct'] += 1

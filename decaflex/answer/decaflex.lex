@@ -9,7 +9,8 @@ using namespace std;
 %}
 
 ALL_CHAR     [\a\b[:print:][:space:]]
-CHAR         [\a\b[:print:][:space:]]{-}[\\]
+CHAR_CHAR    [\a\b[:print:][:space:]]{-}[\'\n\\]
+STRING_CHAR  [\a\b[:print:][:space:]]{-}[\"\n\\]
 CHAR_NO_NL   [\a\b[:print:][:space:]]{-}[\n]
 ESC_CHAR     \\(n|r|t|v|f|a|b|\\|\'|\")
 HEX_DIGIT    [0-9A-Fa-f]
@@ -19,8 +20,8 @@ COMMENT      \/\/{CHAR_NO_NL}*\n
 DECIMAL_LIT  [0-9]*
 HEX_LIT      0(x|X){HEX_DIGIT}*
 INT_LIT      {HEX_LIT}|{DECIMAL_LIT}
-CHAR_LIT     \'({CHAR}|{ESC_CHAR})*\'
-STRING_LIT   \"({CHAR}|{ESC_CHAR})*\"
+CHAR_LIT     \'({CHAR_CHAR}|{ESC_CHAR})*\'
+STRING_LIT   \"({STRING_CHAR}|{ESC_CHAR})*\"
 
 %%
   /*
