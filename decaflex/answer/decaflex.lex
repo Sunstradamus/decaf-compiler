@@ -85,11 +85,14 @@ while           { return 45; }
 
 int main () {
   int token;
+  int line_count = 1;
+  int char_location = 1;
   string lexeme;
   string new_line;
   while ((token = yylex())) {
     if (token > 0) {
       lexeme.assign(yytext);
+      char_location += lexeme.length();
       switch(token) {
                 case 1: cout << "T_AND " << lexeme << endl; break;
                 case 2: cout << "T_ASSIGN " << lexeme << endl; break;
@@ -141,11 +144,16 @@ int main () {
                 case 48: cout << "T_STRINGCONSTANT " << lexeme << endl; break;
                 case 49:
                   new_line = "";
+                  // Subtract the string length and then add it char by char since it may contain a \n
+                  char_location -= lexeme.length();
                   for (string::iterator it = lexeme.begin(); it != lexeme.end(); ++it) {
                     if (*it == '\n') {
+                      line_count++;
+                      char_location = 1;
                       new_line.push_back('\\');
                       new_line.push_back('n');
                     } else {
+                      char_location++;
                       new_line.push_back(*it);
                     }
                   }
@@ -158,6 +166,8 @@ int main () {
                   new_line.resize(new_line.size()-1);
                   new_line.push_back('\\');
                   new_line.push_back('n');
+                  line_count++;
+                  char_location = 1;
                   //cout << "T_COMMENT " << lexeme << endl; break;
                   cout << "T_COMMENT " << new_line << endl; break;
                 default: exit(EXIT_FAILURE);
