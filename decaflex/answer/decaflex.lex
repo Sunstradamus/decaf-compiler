@@ -174,6 +174,7 @@ int main () {
       }
     } else {
       if (token < 0) {
+        cerr << "Error on line " << line_count << ", character " << char_location << endl;
         exit(EXIT_FAILURE);
       }
     }
