@@ -20,7 +20,7 @@ COMMENT      \/\/{CHAR_NO_NL}*\n
 DECIMAL_LIT  [0-9]*
 HEX_LIT      0(x|X){HEX_DIGIT}*
 INT_LIT      {HEX_LIT}|{DECIMAL_LIT}
-CHAR_LIT     \'({CHAR_CHAR}|{ESC_CHAR})*\'
+CHAR_LIT     \'({CHAR_CHAR}|{ESC_CHAR})\'
 STRING_LIT   \"({STRING_CHAR}|{ESC_CHAR})*\"
 
 %%
