@@ -2,5 +2,4 @@
 Your documentation
 ------------------
 
-Make it so.
-
+decaflex meets all requirements and can correctly tokenize multiline comments

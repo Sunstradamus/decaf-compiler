@@ -17,8 +17,9 @@ HEX_DIGIT    [0-9A-Fa-f]
 LETTER       [a-zA-Z\_]
 IDENTIFIER   {LETTER}({LETTER}|[0-9])*
 COMMENT      \/\/{CHAR_NO_NL}*\n
-DECIMAL_LIT  [0-9]*
-HEX_LIT      0(x|X){HEX_DIGIT}*
+MULT_COMMENT "/*"[^"*/"]*"*/"
+DECIMAL_LIT  [0-9]+
+HEX_LIT      0(x|X){HEX_DIGIT}+
 INT_LIT      {HEX_LIT}|{DECIMAL_LIT}
 CHAR_LIT     \'({CHAR_CHAR}|{ESC_CHAR})\'
 STRING_LIT   \"({STRING_CHAR}|{ESC_CHAR})*\"
@@ -56,29 +57,29 @@ STRING_LIT   \"({STRING_CHAR}|{ESC_CHAR})*\"
 ";"             { return 26; }
 bool            { return 27; }
 break           { return 28; }
-comment         { return 29; }
-continue        { return 30; }
-else            { return 31; }
-extern          { return 32; }
-false           { return 33; }
-for             { return 34; }
-func            { return 35; }
-if              { return 36; }
-int             { return 37; }
-null            { return 38; }
-package         { return 39; }
-return          { return 40; }
-string          { return 41; }
-true            { return 42; }
-var             { return 43; }
-void            { return 44; }
-while           { return 45; }
-{CHAR_LIT}      { return 46; }
-{INT_LIT}       { return 47; }
-{STRING_LIT}    { return 48; }
-[[:space:]]+    { return 49; }
-{IDENTIFIER}    { return 50; }
-{COMMENT}       { return 51; }
+continue        { return 29; }
+else            { return 30; }
+extern          { return 31; }
+false           { return 32; }
+for             { return 33; }
+func            { return 34; }
+if              { return 35; }
+int             { return 36; }
+null            { return 37; }
+package         { return 38; }
+return          { return 39; }
+string          { return 40; }
+true            { return 41; }
+var             { return 42; }
+void            { return 43; }
+while           { return 44; }
+{CHAR_LIT}      { return 45; }
+{INT_LIT}       { return 46; }
+{STRING_LIT}    { return 47; }
+[[:space:]]+    { return 48; }
+{IDENTIFIER}    { return 49; }
+{COMMENT}       { return 50; }
+{MULT_COMMENT}  { return 51; }
 .               { cerr << "Error: unexpected character in input" << endl; return -1; }
 
 %%
@@ -122,27 +123,26 @@ int main () {
                 case 26: cout << "T_SEMICOLON " << lexeme << endl; break;
                 case 27: cout << "T_BOOLTYPE " << lexeme << endl; break;
                 case 28: cout << "T_BREAK " << lexeme << endl; break;
-                case 29: cout << "T_COMMENT " << lexeme << endl; break;
-                case 30: cout << "T_CONTINUE " << lexeme << endl; break;
-                case 31: cout << "T_ELSE " << lexeme << endl; break;
-                case 32: cout << "T_EXTERN " << lexeme << endl; break;
-                case 33: cout << "T_FALSE " << lexeme << endl; break;
-                case 34: cout << "T_FOR " << lexeme << endl; break;
-                case 35: cout << "T_FUNC " << lexeme << endl; break;
-                case 36: cout << "T_IF " << lexeme << endl; break;
-                case 37: cout << "T_INTTYPE " << lexeme << endl; break;
-                case 38: cout << "T_NULL " << lexeme << endl; break;
-                case 39: cout << "T_PACKAGE " << lexeme << endl; break;
-                case 40: cout << "T_RETURN " << lexeme << endl; break;
-                case 41: cout << "T_STRINGTYPE " << lexeme << endl; break;
-                case 42: cout << "T_TRUE " << lexeme << endl; break;
-                case 43: cout << "T_VAR " << lexeme << endl; break;
-                case 44: cout << "T_VOID " << lexeme << endl; break;
-                case 45: cout << "T_WHILE " << lexeme << endl; break;
-                case 46: cout << "T_CHARCONSTANT " << lexeme << endl; break;
-                case 47: cout << "T_INTCONSTANT " << lexeme << endl; break;
-                case 48: cout << "T_STRINGCONSTANT " << lexeme << endl; break;
-                case 49:
+                case 29: cout << "T_CONTINUE " << lexeme << endl; break;
+                case 30: cout << "T_ELSE " << lexeme << endl; break;
+                case 31: cout << "T_EXTERN " << lexeme << endl; break;
+                case 32: cout << "T_FALSE " << lexeme << endl; break;
+                case 33: cout << "T_FOR " << lexeme << endl; break;
+                case 34: cout << "T_FUNC " << lexeme << endl; break;
+                case 35: cout << "T_IF " << lexeme << endl; break;
+                case 36: cout << "T_INTTYPE " << lexeme << endl; break;
+                case 37: cout << "T_NULL " << lexeme << endl; break;
+                case 38: cout << "T_PACKAGE " << lexeme << endl; break;
+                case 39: cout << "T_RETURN " << lexeme << endl; break;
+                case 40: cout << "T_STRINGTYPE " << lexeme << endl; break;
+                case 41: cout << "T_TRUE " << lexeme << endl; break;
+                case 42: cout << "T_VAR " << lexeme << endl; break;
+                case 43: cout << "T_VOID " << lexeme << endl; break;
+                case 44: cout << "T_WHILE " << lexeme << endl; break;
+                case 45: cout << "T_CHARCONSTANT " << lexeme << endl; break;
+                case 46: cout << "T_INTCONSTANT " << lexeme << endl; break;
+                case 47: cout << "T_STRINGCONSTANT " << lexeme << endl; break;
+                case 48:
                   new_line = "";
                   // Subtract the string length and then add it char by char since it may contain a \n
                   char_location -= lexeme.length();
@@ -157,19 +157,32 @@ int main () {
                       new_line.push_back(*it);
                     }
                   }
-                  //cout << "T_WHITESPACE " << lexeme << endl;
                   cout << "T_WHITESPACE " << new_line << endl;
                   break;
-                case 50: cout << "T_ID " << lexeme << endl; break;
-                case 51: 
+                case 49: cout << "T_ID " << lexeme << endl; break;
+                case 50: 
                   new_line.assign(lexeme);
                   new_line.resize(new_line.size()-1);
                   new_line.push_back('\\');
                   new_line.push_back('n');
                   line_count++;
                   char_location = 1;
-                  //cout << "T_COMMENT " << lexeme << endl; break;
                   cout << "T_COMMENT " << new_line << endl; break;
+                case 51:
+                  new_line = "";
+                  char_location -= lexeme.length();
+                  for (string::iterator it = lexeme.begin(); it != lexeme.end(); ++it) {
+                    if (*it == '\n') {
+                      line_count++;
+                      char_location = 1;
+                      new_line.push_back('\\');
+                      new_line.push_back('n');
+                    } else {
+                      char_location++;
+                      new_line.push_back(*it);
+                    }
+                  }
+                  cout << "T_MULTILINE_COMMENT " << new_line << endl; break;
                 default: exit(EXIT_FAILURE);
       }
     } else {
