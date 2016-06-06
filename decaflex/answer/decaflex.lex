@@ -17,12 +17,18 @@ HEX_DIGIT    [0-9A-Fa-f]
 LETTER       [a-zA-Z\_]
 IDENTIFIER   {LETTER}({LETTER}|[0-9])*
 COMMENT      \/\/{CHAR_NO_NL}*\n
-MULT_COMMENT "/*"[^"*/"]*"*/"
 DECIMAL_LIT  [0-9]+
 HEX_LIT      0(x|X){HEX_DIGIT}+
 INT_LIT      {HEX_LIT}|{DECIMAL_LIT}
 CHAR_LIT     \'({CHAR_CHAR}|{ESC_CHAR})\'
 STRING_LIT   \"({STRING_CHAR}|{ESC_CHAR})*\"
+BAD_ESC_CHAR \\[^nrtvfab\\\'\"]
+BAD_STRING   \"({STRING_CHAR}|{BAD_ESC_CHAR})*\"
+NL_IN_STRING \"({STRING_CHAR}|{ESC_CHAR}|\n)*\"
+OPEN_STRING  \"({STRING_CHAR}|{ESC_CHAR}|\n)*
+BAD_CHAR     \'({CHAR_CHAR}|{ESC_CHAR})({CHAR_CHAR}|{ESC_CHAR})+\'
+OPEN_CHAR    \'({CHAR_CHAR}|{ESC_CHAR})[^\']*
+ZERO_CHAR    \'\'
 
 %%
   /*
@@ -79,7 +85,12 @@ while           { return 44; }
 [[:space:]]+    { return 48; }
 {IDENTIFIER}    { return 49; }
 {COMMENT}       { return 50; }
-{MULT_COMMENT}  { return 51; }
+{BAD_STRING}    { cerr << "Error: unknown escape sequence in string constant" << endl; return -1; }
+{NL_IN_STRING}  { cerr << "Error: newline in string constant" << endl; return -1; }
+{OPEN_STRING}   { cerr << "Error: string constant is missing closing delimiter" << endl; return -1; }
+{BAD_CHAR}      { cerr << "Error: char constant length is greater than one" << endl; return -1; }
+{OPEN_CHAR}     { cerr << "Error: unterminated char constant" << endl; return -1; }
+{ZERO_CHAR}     { cerr << "Error: char constant has zero width" << endl; return -1; }
 .               { cerr << "Error: unexpected character in input" << endl; return -1; }
 
 %%
@@ -168,26 +179,11 @@ int main () {
                   line_count++;
                   char_location = 1;
                   cout << "T_COMMENT " << new_line << endl; break;
-                case 51:
-                  new_line = "";
-                  char_location -= lexeme.length();
-                  for (string::iterator it = lexeme.begin(); it != lexeme.end(); ++it) {
-                    if (*it == '\n') {
-                      line_count++;
-                      char_location = 1;
-                      new_line.push_back('\\');
-                      new_line.push_back('n');
-                    } else {
-                      char_location++;
-                      new_line.push_back(*it);
-                    }
-                  }
-                  cout << "T_MULTILINE_COMMENT " << new_line << endl; break;
                 default: exit(EXIT_FAILURE);
       }
     } else {
       if (token < 0) {
-        cerr << "Error on line " << line_count << ", character " << char_location << endl;
+        cerr << "Lexical error: line " << line_count << ", position " << char_location << endl;
         exit(EXIT_FAILURE);
       }
     }
