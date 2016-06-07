@@ -29,4 +29,5 @@ $(cpptargets): %: %.y
 clean:
 	$(rm) $(targets) $(cpptargets)
 	$(rm) *.tab.h *.tab.c *.lex.c
+	$(rm) *.tab.cc *.lex.cc
 
