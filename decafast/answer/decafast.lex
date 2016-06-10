@@ -41,56 +41,56 @@ ZERO_CHAR    \'\'
     Pattern definitions for all tokens 
   */
 
-"&&"            { yylval.sval = new string(yytext); return T_AND; }
-"="             { yylval.sval = new string(yytext); return T_ASSIGN; }
-","             { yylval.sval = new string(yytext); return T_COMMA; }
-"/"             { yylval.sval = new string(yytext); return T_DIV; }
-"."             { yylval.sval = new string(yytext); return T_DOT; }
-"=="            { yylval.sval = new string(yytext); return T_EQ; }
-">="            { yylval.sval = new string(yytext); return T_GEQ; }
-">"             { yylval.sval = new string(yytext); return T_GT; }
-"{"             { yylval.sval = new string(yytext); return T_LCB; }
-"<<"            { yylval.sval = new string(yytext); return T_LEFTSHIFT; }
-"<="            { yylval.sval = new string(yytext); return T_LEQ; }
-"("             { yylval.sval = new string(yytext); return T_LPAREN; }
-"["             { yylval.sval = new string(yytext); return T_LSB; }
-"<"             { yylval.sval = new string(yytext); return T_LT; }
-"-"             { yylval.sval = new string(yytext); return T_MINUS; }
-"%"             { yylval.sval = new string(yytext); return T_MOD; }
-"*"             { yylval.sval = new string(yytext); return T_MULT; }
-"!="            { yylval.sval = new string(yytext); return T_NEQ; }
-"!"             { yylval.sval = new string(yytext); return T_NOT; }
-"||"            { yylval.sval = new string(yytext); return T_OR; }
-"+"             { yylval.sval = new string(yytext); return T_PLUS; }
-"}"             { yylval.sval = new string(yytext); return T_RCB; }
-">>"            { yylval.sval = new string(yytext); return T_RIGHTSHIFT; }
-")"             { yylval.sval = new string(yytext); return T_RPAREN; }
-"]"             { yylval.sval = new string(yytext); return T_RSB; }
-";"             { yylval.sval = new string(yytext); return T_SEMICOLON; }
-bool            { yylval.sval = new string(yytext); return T_BOOLTYPE; }
-break           { yylval.sval = new string(yytext); return T_BREAK; }
-continue        { yylval.sval = new string(yytext); return T_CONTINUE; }
-else            { yylval.sval = new string(yytext); return T_ELSE; }
-extern          { yylval.sval = new string(yytext); return T_EXTERN; }
-false           { yylval.sval = new string(yytext); return T_FALSE; }
-for             { yylval.sval = new string(yytext); return T_FOR; }
-func            { yylval.sval = new string(yytext); return T_FUNC; }
-if              { yylval.sval = new string(yytext); return T_IF; }
-int             { yylval.sval = new string(yytext); return T_INTTYPE; }
-null            { yylval.sval = new string(yytext); return T_NULL; }
-package         { yylval.sval = new string(yytext); return T_PACKAGE; }
-return          { yylval.sval = new string(yytext); return T_RETURN; }
-string          { yylval.sval = new string(yytext); return T_STRINGTYPE; }
-true            { yylval.sval = new string(yytext); return T_TRUE; }
-var             { yylval.sval = new string(yytext); return T_VAR; }
-void            { yylval.sval = new string(yytext); return T_VOID; }
-while           { yylval.sval = new string(yytext); return T_WHILE; }
-{CHAR_LIT}      { yylval.sval = new string(yytext); return T_CHARCONSTANT; }
-{INT_LIT}       { yylval.sval = new string(yytext); return T_INTCONSTANT; }
-{STRING_LIT}    { yylval.sval = new string(yytext); return T_STRINGCONSTANT; }
-[[:space:]]+    { yylval.sval = new string(yytext); }
-{IDENTIFIER}    { yylval.sval = new string(yytext); return T_ID; }
-{COMMENT}       { yylval.sval = new string(yytext); }
+"&&"            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_AND; }
+"="             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_ASSIGN; }
+","             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_COMMA; }
+"/"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_DIV; }
+"."             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_DOT; }
+"=="            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_EQ; }
+">="            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_GEQ; }
+">"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_GT; }
+"{"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_LCB; }
+"<<"            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_LEFTSHIFT; }
+"<="            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_LEQ; }
+"("             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_LPAREN; }
+"["             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_LSB; }
+"<"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_LT; }
+"-"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_MINUS; }
+"%"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_MOD; }
+"*"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_MULT; }
+"!="            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_NEQ; }
+"!"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_NOT; }
+"||"            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_OR; }
+"+"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_PLUS; }
+"}"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_RCB; }
+">>"            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_RIGHTSHIFT; }
+")"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_RPAREN; }
+"]"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_RSB; }
+";"             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_SEMICOLON; }
+bool            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_BOOLTYPE; }
+break           { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_BREAK; }
+continue        { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_CONTINUE; }
+else            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_ELSE; }
+extern          { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_EXTERN; }
+false           { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_FALSE; }
+for             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_FOR; }
+func            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_FUNC; }
+if              { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_IF; }
+int             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_INTTYPE; }
+null            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_NULL; }
+package         { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_PACKAGE; }
+return          { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_RETURN; }
+string          { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_STRINGTYPE; }
+true            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_TRUE; }
+var             { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_VAR; }
+void            { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_VOID; }
+while           { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_WHILE; }
+{CHAR_LIT}      { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_CHARCONSTANT; }
+{INT_LIT}       { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_INTCONSTANT; }
+{STRING_LIT}    { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_STRINGCONSTANT; }
+[[:space:]]+    { string lexeme; lexeme.assign(yytext); for (string::iterator it = lexeme.begin(); it != lexeme.end(); ++it) { if (*it == '\n') { lineno++; tokenpos = 1; } else { tokenpos++; } } }
+{IDENTIFIER}    { yylval.sval = new string(yytext); tokenpos = tokenpos + yylval.sval->length(); return T_ID; }
+{COMMENT}       { yylval.sval = new string(yytext); lineno++; tokenpos=1; }
 {BAD_STRING}    { cerr << "Error: unknown escape sequence in string constant" << endl; return -1; }
 {NL_IN_STRING}  { cerr << "Error: newline in string constant" << endl; return -1; }
 {OPEN_STRING}   { cerr << "Error: string constant is missing closing delimiter" << endl; return -1; }

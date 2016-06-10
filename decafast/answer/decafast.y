@@ -90,9 +90,9 @@ start: program
 program: st_extern decafpackage
     { 
       //        ProgramAST *prog = new ProgramAST((decafStmtList *)$1, (PackageAST *)$2); 
-      //		if (printAST) {
-      //			cout << getString(prog) << endl;
-      //		}
+      //        if (printAST) {
+      //            cout << getString(prog) << endl;
+      //        }
       //        delete prog;
       cout << "hello World" << endl;
     }
@@ -106,8 +106,8 @@ st_extern: T_EXTERN T_FUNC T_ID T_LPAREN op_cs_externtype T_RPAREN methodtype T_
 
 decafpackage: T_PACKAGE T_ID T_LCB field_decl method_decl T_RCB
     { 
-      //      $$ = new PackageAST(*$3, new decafStmtList(), new decafStmtList());
-      //      delete $3;
+      //      $$ = new PackageAST(*$2, new decafStmtList(), new decafStmtList());
+      //      delete $2;
     };
 
 field_decl: T_VAR T_ID decaftype T_SEMICOLON field_decl
