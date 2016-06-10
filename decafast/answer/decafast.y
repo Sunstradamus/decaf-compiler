@@ -74,13 +74,20 @@ using namespace std;
 %token T_COMMENT
 
 
- //%type <ast> extern_list decafpackage
+//%type <ast> extern_list decafpackage
 
 %%
 
+/*  op = option (zero or one)
+    st = star (zero or more)
+    pl = plus (one or more)
+    cs = comma separated (1 or more separated by commas)
+*/
+
+
 start: program
 
-program: extern_list decafpackage
+program: st_extern decafpackage
     { 
       //        ProgramAST *prog = new ProgramAST((decafStmtList *)$1, (PackageAST *)$2); 
       //		if (printAST) {
@@ -90,7 +97,7 @@ program: extern_list decafpackage
       cout << "hello World" << endl;
     }
 
-extern_list: T_EXTERN T_FUNC T_ID T_LPAREN externtype_lists T_RPAREN methodtype T_SEMICOLON extern_list
+st_extern: T_EXTERN T_FUNC T_ID T_LPAREN op_cs_externtype T_RPAREN methodtype T_SEMICOLON st_extern
            | /* empty string */
     {
       //      decafStmtList *slist = new decafStmtList();
@@ -104,34 +111,107 @@ decafpackage: T_PACKAGE T_ID T_LCB field_decl method_decl T_RCB
     };
 
 field_decl: T_VAR T_ID decaftype T_SEMICOLON field_decl
-          | T_VAR T_ID T_COMMA id_list decaftype T_SEMICOLON field_decl
-          | T_VAR id_list arraytype T_SEMICOLON field_decl
-          | T_VAR T_ID decaftype T_EQ constant T_SEMICOLON field_decl
+          | T_VAR T_ID T_COMMA cs_id decaftype T_SEMICOLON field_decl
+          | T_VAR cs_id arraytype T_SEMICOLON field_decl
+          | T_VAR T_ID decaftype T_ASSIGN constant T_SEMICOLON field_decl
           | /* empty string */
     {};
 
-method_decl: T_FUNC T_ID T_LPAREN idtype_lists T_RPAREN methodtype decafblock method_decl
+method_decl: T_FUNC T_ID T_LPAREN op_cs_idtype T_RPAREN methodtype decafblock method_decl
            | /* empty string */
-           {};
-
-decafblock: T_LCB T_RCB {};
-
-id_list: T_ID T_COMMA id_list
-       | T_ID
     {};
 
-externtype_lists: externtype_list
+decafblock: T_LCB var_decls statements T_RCB {};
+
+var_decls: T_VAR cs_id decaftype T_SEMICOLON var_decls
+         | /* empty string */
+    {};
+
+statements: statement statements
+          | /* empty string */
+    {};
+
+statement: decafblock
+         | assign T_SEMICOLON
+         | methodcall T_SEMICOLON
+         | T_IF T_LPAREN decafexpr T_RPAREN decafblock op_else
+         | T_WHILE T_LPAREN decafexpr T_RPAREN decafblock
+         | T_FOR T_LPAREN cs_assign T_SEMICOLON decafexpr T_SEMICOLON cs_assign T_RPAREN decafblock
+         | T_RETURN op_returnexpr T_SEMICOLON
+         | T_BREAK T_SEMICOLON
+         | T_CONTINUE T_SEMICOLON
+    {};
+
+decafexpr: expr binaryop decafexpr
+         | expr {};
+
+expr: T_ID
+    | methodcall
+    | constant
+    | T_LPAREN decafexpr T_RPAREN
+    | unaryop expr
+    | T_ID T_LSB decafexpr T_RSB
+
+unaryop: T_NOT | T_MINUS {};
+
+binaryop: arithmeticop
+        | booleanop
+    {};
+
+arithmeticop: T_PLUS | T_MINUS | T_MULT | T_DIV | T_LEFTSHIFT | T_RIGHTSHIFT | T_MOD {};
+
+booleanop: T_EQ | T_NEQ | T_LT | T_LEQ | T_GT | T_GEQ | T_AND | T_OR {};
+
+op_returnexpr: T_LPAREN op_decafexpr T_RPAREN
+             | /* empty string */
+    {};
+
+op_decafexpr: decafexpr | /* empty string */ {};
+
+op_else: T_ELSE decafblock
+       | /* empty string */
+    {};
+
+cs_assign: assign T_COMMA cs_assign
+         | assign
+    {};
+
+assign: lvalue T_ASSIGN decafexpr {};
+
+lvalue: T_ID
+      | T_ID T_LSB decafexpr T_RSB
+    {};
+
+methodcall: T_ID T_LPAREN op_cs_methodarg T_RPAREN
+
+op_cs_methodarg: cs_methodarg
+               | /* empty string */
+    {};
+
+cs_methodarg: methodarg T_COMMA cs_methodarg
+            | methodarg
+    {};
+
+methodarg: decafexpr
+         | T_STRINGCONSTANT
+    {};
+
+cs_id: T_ID T_COMMA cs_id
+     | T_ID
+    {};
+
+op_cs_externtype: cs_externtype
                 | /* empty string */
     {};
 
-externtype_list: externtype T_COMMA externtype_list
-               | externtype
+cs_externtype: externtype T_COMMA cs_externtype
+             | externtype
     {};
 
-idtype_lists: idtype_list | /* empty string */ {};
+op_cs_idtype: cs_idtype | /* empty string */ {};
 
-idtype_list: T_ID decaftype T_COMMA idtype_list
-           | T_ID decaftype
+cs_idtype: T_ID decaftype T_COMMA cs_idtype
+         | T_ID decaftype
     {};
 
 // Basic definitions
