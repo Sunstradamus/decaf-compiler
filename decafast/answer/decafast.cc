@@ -313,3 +313,166 @@ public:
 		return string("False");
 	}
 };
+
+class decafUnaryOperator : public decafAST {
+};
+
+class decafUnaryMinusOperator : public decafUnaryOperator {
+public:
+	decafUnaryMinusOperator() {}
+	~decafUnaryMinusOperator() {}
+	string str() {
+		return string("UnaryMinus");
+	}
+};
+
+class decafNotOperator : public decafUnaryOperator {
+public:
+	decafNotOperator() {}
+	~decafNotOperator() {}
+	string str() {
+		return string("Not");
+	}
+};
+
+class decafBinaryOperator : public decafAST {
+};
+
+// arithmeticop
+
+class decafPlusOperator : public decafBinaryOperator {
+public:
+	decafPlusOperator() {}
+	~decafPlusOperator() {}
+	string str() {
+		return string("Plus");
+	}
+};
+
+class decafMinusOperator : public decafBinaryOperator {
+public:
+	decafMinusOperator() {}
+	~decafMinusOperator() {}
+	string str() {
+		return string("Minus");
+	}
+};
+
+class decafMultOperator : public decafBinaryOperator {
+public:
+	decafMultOperator() {}
+	~decafMultOperator() {}
+	string str() {
+		return string("Mult");
+	}
+};
+
+class decafDivOperator : public decafBinaryOperator {
+public:
+	decafDivOperator() {}
+	~decafDivOperator() {}
+	string str() {
+		return string("Div");
+	}
+};
+
+class decafLeftshiftOperator : public decafBinaryOperator {
+public:
+	decafLeftshiftOperator() {}
+	~decafLeftshiftOperator() {}
+	string str() {
+		return string("Leftshift");
+	}
+};
+
+class decafRightshiftOperator : public decafBinaryOperator {
+public:
+	decafRightshiftOperator() {}
+	~decafRightshiftOperator() {}
+	string str() {
+		return string("Rightshift");
+	}
+};
+
+class decafModOperator : public decafBinaryOperator {
+public:
+	decafModOperator() {}
+	~decafModOperator() {}
+	string str() {
+		return string("Mod");
+	}
+};
+
+// booleanop
+
+class decafLtOperator : public decafBinaryOperator {
+public:
+	decafLtOperator() {}
+	~decafLtOperator() {}
+	string str() {
+		return string("Lt");
+	}
+};
+
+class decafGtOperator : public decafBinaryOperator {
+public:
+	decafGtOperator() {}
+	~decafGtOperator() {}
+	string str() {
+		return string("Gt");
+	}
+};
+
+class decafLeqOperator : public decafBinaryOperator {
+public:
+	decafLeqOperator() {}
+	~decafLeqOperator() {}
+	string str() {
+		return string("Leq");
+	}
+};
+
+class decafGeqOperator : public decafBinaryOperator {
+public:
+	decafGeqOperator() {}
+	~decafGeqOperator() {}
+	string str() {
+		return string("Geq");
+	}
+};
+
+class decafEqOperator : public decafBinaryOperator {
+public:
+	decafEqOperator() {}
+	~decafEqOperator() {}
+	string str() {
+		return string("Eq");
+	}
+};
+
+class decafNeqOperator : public decafBinaryOperator {
+public:
+	decafNeqOperator() {}
+	~decafNeqOperator() {}
+	string str() {
+		return string("Neq");
+	}
+};
+
+class decafAndOperator : public decafBinaryOperator {
+public:
+	decafAndOperator() {}
+	~decafAndOperator() {}
+	string str() {
+		return string("And");
+	}
+};
+
+class decafOrOperator : public decafBinaryOperator {
+public:
+	decafOrOperator() {}
+	~decafOrOperator() {}
+	string str() {
+		return string("Or");
+	}
+};

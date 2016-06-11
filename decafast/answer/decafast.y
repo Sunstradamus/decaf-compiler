@@ -74,7 +74,7 @@ using namespace std;
 %token T_COMMENT
 
 %type <ast> st_extern decafpackage decaftype methodtype externtype op_cs_externtype cs_externtype method_decl op_cs_idtype cs_idtype decafblock var_decls
-%type <ast> cs_id statements statement assign methodcall boolconstant
+%type <ast> cs_id statements statement assign methodcall boolconstant booleanop arithmeticop binaryop unaryop
 
 %%
 
@@ -213,15 +213,83 @@ expr: T_ID
     | unaryop expr
     | T_ID T_LSB decafexpr T_RSB
 
-unaryop: T_NOT | T_MINUS {};
+unaryop: T_NOT
+{
+  $$ = new decafNotOperator();
+}
+       | T_MINUS
+{
+  $$ = new decafUnaryMinusOperator();
+}
+       ;
 
 binaryop: arithmeticop
         | booleanop
-    {};
+        ;
 
-arithmeticop: T_PLUS | T_MINUS | T_MULT | T_DIV | T_LEFTSHIFT | T_RIGHTSHIFT | T_MOD {};
+arithmeticop: T_PLUS
+{
+  $$ = new decafPlusOperator();
+}
+            | T_MINUS
+{
+  $$ = new decafMinusOperator();
+}
+            | T_MULT
+{
+  $$ = new decafMultOperator();
+}
+            | T_DIV
+{
+  $$ = new decafDivOperator();
+}
+            | T_LEFTSHIFT
+{
+  $$ = new decafLeftshiftOperator();
+}
+            | T_RIGHTSHIFT
+{
+  $$ = new decafRightshiftOperator();
+}
+            | T_MOD
+{
+  $$ = new decafModOperator();
+}
+            ;
 
-booleanop: T_EQ | T_NEQ | T_LT | T_LEQ | T_GT | T_GEQ | T_AND | T_OR {};
+booleanop: T_EQ
+{
+  $$ = new decafEqOperator();
+}
+         | T_NEQ
+{
+  $$ = new decafNeqOperator();
+}
+         | T_LT
+{
+  $$ = new decafLtOperator();
+}
+         | T_LEQ
+{
+  $$ = new decafLeqOperator();
+}
+         | T_GT
+{
+  $$ = new decafGtOperator();
+}
+         | T_GEQ
+{
+  $$ = new decafGeqOperator();
+}
+         | T_AND
+{
+  $$ = new decafAndOperator();
+}
+         | T_OR
+{
+  $$ = new decafOrOperator();
+}
+         ;
 
 op_returnexpr: T_LPAREN op_decafexpr T_RPAREN
              | /* empty string */
