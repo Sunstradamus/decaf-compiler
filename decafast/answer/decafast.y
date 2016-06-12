@@ -75,7 +75,7 @@ using namespace std;
 
 %type <ast> st_extern decafpackage decaftype methodtype externtype op_cs_externtype cs_externtype method_decl op_cs_idtype cs_idtype decafblock var_decls
 %type <ast> cs_id statements statement assign methodcall boolconstant booleanop arithmeticop binaryop unaryop op_cs_methodarg cs_methodarg methodarg decafexpr
-%type <ast> expr constant lvalue op_returnexpr op_decafexpr op_else cs_assign
+%type <ast> expr constant lvalue op_returnexpr op_decafexpr op_else cs_assign field_decl arraytype
 
 %%
 
@@ -114,16 +114,58 @@ st_extern: T_EXTERN T_FUNC T_ID T_LPAREN op_cs_externtype T_RPAREN methodtype T_
 
 decafpackage: T_PACKAGE T_ID T_LCB field_decl method_decl T_RCB
 { 
-  $$ = new PackageAST(*$2, new decafStmtList(), (decafStmtList *)$5);
+  $$ = new PackageAST(*$2, (decafStmtList *)$4, (decafStmtList *)$5);
   delete $2;
 };
 
 field_decl: T_VAR T_ID decaftype T_SEMICOLON field_decl
+{
+  decafStmtList *slist = (decafStmtList *)$5;
+  FieldDeclAST *field = new FieldDeclAST(*$2, (decafType *)$3, new decafFieldSize());
+  slist->push_front(field);
+  $$ = slist;
+  delete $2;
+}
           | T_VAR T_ID T_COMMA cs_id decaftype T_SEMICOLON field_decl
+{
+  decafStmtList *slist = (decafStmtList *)$7;
+  decafIdList *id_list = (decafIdList *)$4;
+  id_list->push_front(*$2);
+  decafType *type = (decafType *)$5;
+  for (list<string>::iterator i = id_list->begin(); i != id_list->end(); i++) {
+    slist->push_front(new FieldDeclAST(*i, type->clone(), new decafFieldSize()));
+  }
+  $$ = slist;
+  delete type;
+  delete id_list;
+  delete $2;
+}
           | T_VAR cs_id arraytype T_SEMICOLON field_decl
+{
+  decafStmtList *slist = (decafStmtList *)$5;
+  decafIdList *id_list = (decafIdList *)$2;
+  decafArrayType *at = (decafArrayType *)$3;
+  for (list<string>::iterator i = id_list->begin(); i != id_list->end(); i++) {
+    slist->push_front(new FieldDeclAST(*i, at->getType(), new decafFieldSize(at->getSize())));
+  }
+  $$ = slist;
+  delete at;
+  delete id_list;
+}
           | T_VAR T_ID decaftype T_ASSIGN constant T_SEMICOLON field_decl
+{
+  decafStmtList *slist = (decafStmtList *)$7;
+  AssignGlobalVarAST *field = new AssignGlobalVarAST(*$2, (decafType *)$3, (decafExpression *)$5);
+  slist->push_front(field);
+  $$ = slist;
+  delete $2;
+}
           | /* empty string */
-    {};
+{
+  decafStmtList *slist = new decafStmtList();
+  $$ = slist;
+}
+          ;
 
 method_decl: T_FUNC T_ID T_LPAREN op_cs_idtype T_RPAREN methodtype decafblock method_decl
 {
@@ -366,7 +408,7 @@ op_else: T_ELSE decafblock
 }
        | /* empty string */
 {
-  $$ = new decafOptBlock();
+  $$ = new decafOptBlock(NULL);
 }
        ;
 
@@ -543,7 +585,10 @@ externtype: T_STRINGTYPE
 }
           ;
 
-arraytype: T_LSB T_INTCONSTANT T_RSB decaftype {};
+arraytype: T_LSB T_INTCONSTANT T_RSB decaftype
+{
+  $$ = new decafArrayType(*$2, (decafType *)$4);
+}
 
 boolconstant: T_TRUE
 {

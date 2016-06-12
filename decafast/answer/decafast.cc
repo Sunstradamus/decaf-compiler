@@ -264,7 +264,6 @@ public:
 class decafOptBlock : public decafStatement {
 	BlockAST *Block;
 public:
-	decafOptBlock() {}
 	decafOptBlock(BlockAST *block) : Block(block) {}
 	~decafOptBlock() {}
 	string str() {
@@ -758,5 +757,65 @@ public:
 	}
 	string str() {
 		return string("AssignArrayLoc") + "(" + Name + "," + getString(Index) + "," + getString(Expression) + ")";
+	}
+};
+
+class decafArrayType : public decafAST {
+	string ArraySize;
+	decafType *Type;
+public:
+	decafArrayType(string arraysize, decafType *type) : ArraySize(arraysize), Type(type) {}
+	~decafArrayType() {}
+	string getSize() { return ArraySize; }
+	decafType* getType() { return Type; }
+};
+
+class decafFieldSize : public decafAST {
+	bool array;
+	string ArraySize;
+public:
+	decafFieldSize() {
+		array = false;
+	}
+	decafFieldSize(string size) : ArraySize(size) {
+		array = true;
+	}
+	~decafFieldSize() {}
+	string str() {
+		if (array) {
+			return string("Array") + "(" + ArraySize + ")";
+		} else {
+			return string("Scalar");
+		}
+	}
+};
+
+class FieldDeclAST : public decafAST {
+	string Name;
+	decafType *Type;
+	decafFieldSize *FieldSize;
+public:
+	FieldDeclAST(string name, decafType *type, decafFieldSize *fs) : Name(name), Type(type), FieldSize(fs) {}
+	~FieldDeclAST() {
+		if (Type != NULL) { delete Type; }
+		if (FieldSize != NULL) { delete FieldSize; }
+	}
+	string str() {
+		return string("FieldDecl") + "(" + Name + "," + getString(Type) + "," + getString(FieldSize) + ")";
+	}
+};
+
+class AssignGlobalVarAST : public decafAST {
+	string Name;
+	decafType *Type;
+	decafExpression *Expression;
+public:
+	AssignGlobalVarAST(string name, decafType *type, decafExpression *exp) : Name(name), Type(type), Expression(exp) {}
+	~AssignGlobalVarAST() {
+		if (Type != NULL) { delete Type; }
+		if (Expression != NULL) { delete Expression; }
+	}
+	string str() {
+		return string("AssignGlobalVar") + "(" + Name + "," + getString(Type) + "," + getString(Expression) + ")";
 	}
 };
