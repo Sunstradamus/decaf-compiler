@@ -611,7 +611,7 @@ externtype: T_STRINGTYPE
   decafStringType *type = new decafStringType();
   $$ = new decafExternType(type);
 }
-          | methodtype
+          | decaftype
 {
   $$ = new decafExternType((decafType *)$1);
 }
