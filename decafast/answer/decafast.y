@@ -146,10 +146,12 @@ field_decl: T_VAR T_ID decaftype T_SEMICOLON field_decl
   decafStmtList *slist = (decafStmtList *)$5;
   decafIdList *id_list = (decafIdList *)$2;
   decafArrayType *at = (decafArrayType *)$3;
+  decafType *type = at->getType();
   for (list<string>::iterator i = id_list->begin(); i != id_list->end(); i++) {
-    slist->push_back(new FieldDeclAST(*i, at->getType(), new decafFieldSize(at->getSize())));
+    slist->push_back(new FieldDeclAST(*i, type->clone(), new decafFieldSize(at->getSize())));
   }
   $$ = slist;
+  delete type;
   delete at;
   delete id_list;
 }
