@@ -212,24 +212,6 @@ public:
 class decafStatement : public decafAST {
 };
 
-class decafBreakStmt : public decafStatement {
-public:
-	decafBreakStmt() {}
-	~decafBreakStmt() {}
-	string str() {
-		return string("BreakStmt");
-	}
-};
-
-class decafContinueStmt : public decafStatement {
-public:
-	decafContinueStmt() {}
-	~decafContinueStmt() {}
-	string str() {
-		return string("ContinueStmt");
-	}
-};
-
 class MethodBlockAST : public decafAST {
 	decafStmtList *VarList;
 	decafStmtList *StmtList;
@@ -274,6 +256,114 @@ public:
 	BlockAST* getBlock() {
 		return new BlockAST(VarList, StmtList);
 	}
+	string str() {
+		return string("decafBlock") + "(" + getString(VarList) + "," + getString(StmtList) + ")";
+	}
+};
+
+class decafOptBlock : public decafStatement {
+	BlockAST *Block;
+public:
+	decafOptBlock() {}
+	decafOptBlock(BlockAST *block) : Block(block) {}
+	~decafOptBlock() {}
+	string str() {
+		if (Block != NULL) {
+			return getString(Block);
+		} else {
+			return string("None");
+		}
+	}
+};
+
+class decafExpression : public decafStatement {
+};
+
+class decafEmptyExpression : public decafExpression {
+public:
+	decafEmptyExpression() {}
+	~decafEmptyExpression() {}
+	string str() {
+		return string("None");
+	}
+};
+
+class decafIfStmt : public decafStatement {
+	decafExpression *Condition;
+	BlockAST *IfBlock;
+	decafOptBlock *ElseBlock;
+public:
+	decafIfStmt(decafExpression *cond, BlockAST *ifblock, decafOptBlock *elseblock) : Condition(cond), IfBlock(ifblock), ElseBlock(elseblock) {}
+	~decafIfStmt() {
+		if (Condition != NULL) { delete Condition; }
+		if (IfBlock != NULL) { delete IfBlock; }
+		if (ElseBlock != NULL) { delete ElseBlock; }
+	}
+	string str() {
+		return string("IfStmt") + "(" + getString(Condition) + "," + getString(IfBlock) + "," + getString(ElseBlock) + ")";
+	}
+};
+
+class decafWhileStmt : public decafStatement {
+	decafExpression *Condition;
+	BlockAST *WhileBlock;
+public:
+	decafWhileStmt(decafExpression *cond, BlockAST *blk) : Condition(cond), WhileBlock(blk) {}
+	~decafWhileStmt() {
+		if (Condition != NULL) { delete Condition; }
+		if (WhileBlock != NULL) { delete WhileBlock; }
+	}
+	string str() {
+		return string("WhileStmt") + "(" + getString(Condition) + "," + getString(WhileBlock) + ")";
+	}
+};
+
+class decafForStmt : public decafStatement {
+	decafStmtList *PreAssign;
+	decafExpression *Condition;
+	decafStmtList *LoopAssign;
+	BlockAST *ForBlock;
+public:
+	decafForStmt(decafStmtList *pa, decafExpression *cond, decafStmtList *la, BlockAST *fb) : PreAssign(pa), Condition(cond), LoopAssign(la), ForBlock(fb) {}
+	~decafForStmt() {
+		if (PreAssign != NULL) { delete PreAssign; }
+		if (Condition != NULL) { delete Condition; }
+		if (LoopAssign != NULL) { delete LoopAssign; }
+		if (ForBlock != NULL) { delete ForBlock; }
+	}
+	string str() {
+		return string("ForStmt") + "(" + getString(PreAssign) + "," + getString(Condition) + "," + getString(LoopAssign) + "," + getString(ForBlock) + ")";
+	}
+};
+
+class decafReturnStmt : public decafStatement {
+	decafExpression *Value;
+public:
+	decafReturnStmt(decafExpression *val) : Value(val) {}
+	~decafReturnStmt() {
+		if (Value != NULL) { delete Value; }
+	}
+	string str() {
+		return string ("ReturnStmt") + "(" + getString(Value) + ")";
+	}
+};
+
+class decafBreakStmt : public decafStatement {
+public:
+	decafBreakStmt() {}
+	~decafBreakStmt() {}
+	string str() {
+		return string("BreakStmt");
+	}
+};
+
+class decafContinueStmt : public decafStatement {
+public:
+	decafContinueStmt() {}
+	~decafContinueStmt() {}
+	string str() {
+		return string("ContinueStmt");
+	}
 };
 
 class MethodAST : public decafAST {
@@ -290,6 +380,19 @@ public:
 	}
 	string str() {
 		return string("Method") + "(" + Name + "," + getString(ReturnType) + "," + getString(SymbolList) + "," + getString(MethodBlock) + ")";
+	}
+};
+
+class MethodCallAST : public decafExpression {
+	string Name;
+	decafStmtList *ArgsList;
+public:
+	MethodCallAST(string name, decafStmtList *args) : Name(name), ArgsList(args) {}
+	~MethodCallAST() {
+		if (ArgsList != NULL) { delete ArgsList; }
+	}
+	string str() {
+		return string("MethodCall") + "(" + Name + "," + getString(ArgsList) + ")";
 	}
 };
 
@@ -474,5 +577,140 @@ public:
 	~decafOrOperator() {}
 	string str() {
 		return string("Or");
+	}
+};
+
+class VariableExprAST : public decafExpression {
+	string Name;
+public:
+	VariableExprAST(string name) : Name(name) {}
+	~VariableExprAST() {}
+	string str() {
+		return string("VariableExpr") + "(" + Name + ")";
+	}
+};
+
+class ArrayLocExprAST : public decafExpression {
+	string Name;
+	decafExpression *Index;
+public:
+	ArrayLocExprAST(string name, decafExpression *index) : Name(name), Index(index) {}
+	~ArrayLocExprAST() {
+		if (Index != NULL) { delete Index; }
+	}
+	string str() {
+		return string("ArrayLocExpr") + "(" + Name + "," + getString(Index) + ")";
+	}
+};
+
+class UnaryExprAST : public decafExpression {
+	decafUnaryOperator *Operator;
+	decafExpression *Expression;
+public:
+	UnaryExprAST(decafUnaryOperator *op, decafExpression *exp) : Operator(op), Expression(exp) {}
+	~UnaryExprAST() {
+		if (Operator != NULL) { delete Operator; }
+		if (Expression != NULL) { delete Expression; }
+	}
+	string str() {
+		return string("UnaryExpr") + "(" + getString(Operator) + "," + getString(Expression) + ")";
+	}
+};
+
+class BinaryExprAST : public decafExpression {
+	decafBinaryOperator *Operator;
+	decafExpression *Left;
+	decafExpression *Right;
+public:
+	BinaryExprAST(decafBinaryOperator *op, decafExpression *left, decafExpression *right) : Operator(op), Left(left), Right(right) {}
+	~BinaryExprAST() {
+		if (Operator != NULL) { delete Operator; }
+		if (Left != NULL) { delete Left; }
+		if (Right != NULL) { delete Right; }
+	}
+	string str() {
+		return string("BinaryExpr") + "(" + getString(Operator) + "," + getString(Left) + "," + getString(Right) + ")";
+	}
+};
+
+class NumberExprAST : public decafExpression {
+	string Value;
+public:
+	NumberExprAST(char val) {
+		int intval = (int) val;
+		stringstream ss;
+		ss << intval;
+		Value.assign(ss.str());
+	}
+	NumberExprAST(string val) : Value(val) {}
+	~NumberExprAST() {}
+	string str() {
+		return string("NumberExpr") + "(" + Value + ")";
+	}
+};
+
+class StringConstantAST : public decafExpression {
+	string Value;
+public:
+	StringConstantAST(string value) : Value(value) {}
+	~StringConstantAST() {}
+	string str() {
+		return string("StringConstant") + "(" + Value + ")";
+	}
+};
+
+class decafLValue : public decafAST {
+	bool array;
+	string Name;
+	decafExpression *Index;
+public:
+	decafLValue(string name) : Name(name) {
+		array = false;
+	}
+	decafLValue(string name, decafExpression *index) : Name(name), Index(index) {
+		array = true;
+	}
+	~decafLValue() {}
+	bool isArray() {
+		/*if (Index != NULL) {
+			return false;
+		} else {
+			return true;
+		}*/
+		return array;
+	}
+	string getName() {
+		return Name;
+	}
+	decafExpression* getIndex() {
+		return Index;
+	}
+};
+
+class AssignVarAST : public decafStatement {
+	string Name;
+	decafExpression *Expression;
+public:
+	AssignVarAST(string name, decafExpression *value) : Name(name), Expression(value) {}
+	~AssignVarAST() {
+		if (Expression != NULL) { delete Expression; }
+	}
+	string str() {
+		return string("AssignVar") + "(" + Name + "," + getString(Expression) + ")";
+	}
+};
+
+class AssignArrayLocAST : public decafStatement {
+	string Name;
+	decafExpression *Index;
+	decafExpression *Expression;
+public:
+	AssignArrayLocAST(string name, decafExpression *index, decafExpression *value) : Name(name), Index(index), Expression(value) {}
+	~AssignArrayLocAST() {
+		if (Index != NULL) { delete Index; }
+		if (Expression != NULL) { delete Expression; }
+	}
+	string str() {
+		return string("AssignArrayLoc") + "(" + Name + "," + getString(Index) + "," + getString(Expression) + ")";
 	}
 };

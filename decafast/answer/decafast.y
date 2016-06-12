@@ -74,7 +74,8 @@ using namespace std;
 %token T_COMMENT
 
 %type <ast> st_extern decafpackage decaftype methodtype externtype op_cs_externtype cs_externtype method_decl op_cs_idtype cs_idtype decafblock var_decls
-%type <ast> cs_id statements statement assign methodcall boolconstant booleanop arithmeticop binaryop unaryop
+%type <ast> cs_id statements statement assign methodcall boolconstant booleanop arithmeticop binaryop unaryop op_cs_methodarg cs_methodarg methodarg decafexpr
+%type <ast> expr constant lvalue op_returnexpr op_decafexpr op_else cs_assign
 
 %%
 
@@ -144,7 +145,7 @@ method_decl: T_FUNC T_ID T_LPAREN op_cs_idtype T_RPAREN methodtype decafblock me
 
 decafblock: T_LCB var_decls statements T_RCB
 {
-  $$ = new decafBlock((decafStmtList *)$2, new decafStmtList());
+  $$ = new decafBlock((decafStmtList *)$2, (decafStmtList *)$3);
 }
 
 var_decls: T_VAR cs_id decaftype T_SEMICOLON var_decls
@@ -189,10 +190,35 @@ statement: decafblock
 }
          | assign T_SEMICOLON
          | methodcall T_SEMICOLON
+{
+  $$ = (MethodCallAST *)$1;
+}
          | T_IF T_LPAREN decafexpr T_RPAREN decafblock op_else
+{
+  decafBlock *block = (decafBlock *)$5;
+  BlockAST *ifblk = block->getBlock();
+  decafOptBlock *opt = (decafOptBlock *)$6;
+  $$ = new decafIfStmt((decafExpression *)$3, ifblk, opt);
+  delete block;
+}
          | T_WHILE T_LPAREN decafexpr T_RPAREN decafblock
+{
+  decafBlock *block = (decafBlock *)$5;
+  BlockAST *blockAST = block->getBlock();
+  $$ = new decafWhileStmt((decafExpression *)$3, blockAST);
+  delete block;
+}
          | T_FOR T_LPAREN cs_assign T_SEMICOLON decafexpr T_SEMICOLON cs_assign T_RPAREN decafblock
+{
+  decafBlock *block = (decafBlock *)$9;
+  BlockAST *blockAST = block->getBlock();
+  $$ = new decafForStmt((decafStmtList *)$3, (decafExpression *)$5, (decafStmtList *)$7, blockAST);
+  delete block;
+}
          | T_RETURN op_returnexpr T_SEMICOLON
+{
+  $$ = new decafReturnStmt((decafExpression *)$2);
+}
          | T_BREAK T_SEMICOLON
 {
   $$ = new decafBreakStmt();
@@ -204,14 +230,36 @@ statement: decafblock
          ;
 
 decafexpr: expr binaryop decafexpr
-         | expr {};
+{
+  $$ = new BinaryExprAST((decafBinaryOperator *)$2, (decafExpression *)$1, (decafExpression *)$3);
+}
+         | expr
+         ;
 
 expr: T_ID
+{
+  $$ = new VariableExprAST(*$1);
+  delete $1;
+}
     | methodcall
+{
+  $$ = (MethodCallAST *)$1;
+}
     | constant
     | T_LPAREN decafexpr T_RPAREN
+{
+  $$ = (decafExpression *)$2;
+}
     | unaryop expr
+{
+  $$ = new UnaryExprAST((decafUnaryOperator *)$1, (decafExpression *)$2);
+}
     | T_ID T_LSB decafexpr T_RSB
+{
+  $$ = new ArrayLocExprAST(*$1, (decafExpression *)$3);
+  delete $1;
+}
+    ;
 
 unaryop: T_NOT
 {
@@ -292,38 +340,110 @@ booleanop: T_EQ
          ;
 
 op_returnexpr: T_LPAREN op_decafexpr T_RPAREN
+{
+  $$ = (decafExpression *)$2;
+}
              | /* empty string */
-    {};
+{
+  $$ = new decafEmptyExpression();
+}
+             ;
 
-op_decafexpr: decafexpr | /* empty string */ {};
+op_decafexpr: decafexpr
+            | /* empty string */
+{
+  $$ = new decafEmptyExpression();
+}
+            ;
 
 op_else: T_ELSE decafblock
+{
+  decafBlock *block = (decafBlock *)$2;
+  BlockAST *blockAST = block->getBlock();
+  decafOptBlock *opt = new decafOptBlock(blockAST);
+  $$ = opt;
+  delete block;
+}
        | /* empty string */
-    {};
+{
+  $$ = new decafOptBlock();
+}
+       ;
 
 cs_assign: assign T_COMMA cs_assign
+{
+  decafStmtList *list = (decafStmtList *)$3;
+  list->push_front((decafStatement *)$1);
+  $$ = list;
+}
          | assign
-    {};
+{
+  decafStmtList *list = new decafStmtList();
+  list->push_back((decafStatement *)$1);
+  $$ = list;
+}
+         ;
 
-assign: lvalue T_ASSIGN decafexpr {};
+assign: lvalue T_ASSIGN decafexpr
+{
+  decafLValue *lv = (decafLValue *)$1;
+  if ( lv->isArray() ) {
+    $$ = new AssignArrayLocAST(lv->getName(), lv->getIndex(), (decafExpression *)$3);
+  } else {
+    $$ = new AssignVarAST(lv->getName(), (decafExpression *)$3);
+  }
+  delete lv;
+}
 
 lvalue: T_ID
+{
+  $$ = new decafLValue(*$1);
+  delete $1;
+}
       | T_ID T_LSB decafexpr T_RSB
-    {};
+{
+  $$ = new decafLValue(*$1, (decafExpression *)$3);
+  delete $1;
+}
+      ;
 
 methodcall: T_ID T_LPAREN op_cs_methodarg T_RPAREN
+{
+  MethodCallAST *call = new MethodCallAST(*$1, (decafStmtList *)$3);
+  $$ = call;
+  delete $1;
+}
 
 op_cs_methodarg: cs_methodarg
+{
+  $$ = (decafStmtList *)$1;
+}
                | /* empty string */
-    {};
+{
+  $$ = new decafStmtList();
+}
+               ;
 
 cs_methodarg: methodarg T_COMMA cs_methodarg
+{
+  decafStmtList *list = (decafStmtList *)$3;
+  list->push_front((decafExpression *)$1);
+  $$ = list;
+}
             | methodarg
-    {};
+{
+  decafStmtList *list = new decafStmtList();
+  list->push_back((decafExpression *)$1);
+  $$ = list;
+}
+            ;
 
 methodarg: decafexpr
          | T_STRINGCONSTANT
-    {};
+{
+  $$ = new StringConstantAST(*$1);
+}
+         ;
 
 cs_id: T_ID T_COMMA cs_id
 {
@@ -435,7 +555,19 @@ boolconstant: T_TRUE
 }
             ;
 
-constant: T_INTCONSTANT | T_CHARCONSTANT | boolconstant {};
+constant: T_INTCONSTANT
+{
+  $$ = new NumberExprAST(*$1);
+}
+        | T_CHARCONSTANT
+{
+  string character = *$1;
+  $$ = new NumberExprAST(character.at(1));
+  delete $1;
+}
+        | boolconstant
+{}
+        ;
 
 %%
 
