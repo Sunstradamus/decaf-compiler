@@ -652,7 +652,53 @@ public:
 class StringConstantAST : public decafExpression {
 	string Value;
 public:
-	StringConstantAST(string value) : Value(value) {}
+	StringConstantAST(string value) : Value(value) {
+		stringstream ss;
+		for (string::iterator it = value.begin(); it != value.end(); ++it) {
+			if (*it == '\\') {
+				++it;
+				switch (*it) {
+			      case 'a':
+			      	ss << '\a';
+			        break;
+			      case 'b':
+			      	ss << '\b';
+			        break;
+			      case 't':
+			      	ss << '\t';
+			        break;
+			      case 'n':
+			      	ss << '\n';
+			        break;
+			      case 'v':
+			      	ss << '\v';
+			        break;
+			      case 'f':
+			      	ss << '\f';
+			        break;
+			      case 'r':
+			      	ss << '\r';
+			        break;
+			      case '\\':
+			      	ss << '\\';
+			        break;
+			      case '\'':
+			      	ss << '\'';
+			        break;
+			      case '\"':
+			      	ss << '\"';
+			      	break;
+			      default:
+			      	ss << '\\';
+			      	ss << *it;
+			      	break;
+				}
+			} else {
+				ss << *it;
+			}
+		}
+		Value = ss.str();
+	}
 	~StringConstantAST() {}
 	string str() {
 		return string("StringConstant") + "(" + Value + ")";
