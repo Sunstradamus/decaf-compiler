@@ -562,7 +562,45 @@ constant: T_INTCONSTANT
         | T_CHARCONSTANT
 {
   string character = *$1;
-  $$ = new NumberExprAST(character.at(1));
+  if (character.at(1) == '\\') {
+    switch (character.at(2)) {
+      case 'a':
+        $$ = new NumberExprAST('\a');
+        break;
+      case 'b':
+        $$ = new NumberExprAST('\b');
+        break;
+      case 't':
+        $$ = new NumberExprAST('\t');
+        break;
+      case 'n':
+        $$ = new NumberExprAST('\n');
+        break;
+      case 'v':
+        $$ = new NumberExprAST('\v');
+        break;
+      case 'f':
+        $$ = new NumberExprAST('\f');
+        break;
+      case 'r':
+        $$ = new NumberExprAST('\r');
+        break;
+      case '\\':
+        $$ = new NumberExprAST('\\');
+        break;
+      case '\'':
+        $$ = new NumberExprAST('\'');
+        break;
+      case '\"':
+        $$ = new NumberExprAST('\"');
+        break;
+      default:
+        $$ = new NumberExprAST(character.at(2));
+        break;
+    }
+  } else {
+    $$ = new NumberExprAST(character.at(1));
+  }
   delete $1;
 }
         | boolconstant

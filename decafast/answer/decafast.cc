@@ -404,7 +404,7 @@ public:
 	decafBoolTrue() {}
 	~decafBoolTrue() {}
 	string str() {
-		return string("True");
+		return string("BoolExpr(True)");
 	}
 };
 
@@ -413,7 +413,7 @@ public:
 	decafBoolFalse() {}
 	~decafBoolFalse() {}
 	string str() {
-		return string("False");
+		return string("BoolExpr(False)");
 	}
 };
 
