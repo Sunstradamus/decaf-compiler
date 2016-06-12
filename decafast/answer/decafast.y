@@ -195,7 +195,9 @@ var_decls: T_VAR cs_id decaftype T_SEMICOLON var_decls
   decafStmtList *slist = (decafStmtList *)$5;
   decafType *type = (decafType *)$3;
   decafIdList *idlist = (decafIdList *)$2;
-  for (list<string>::iterator i = idlist->begin(); i != idlist->end(); i++) {
+  // Reverse iterator cuz anoop's files do it
+  //for (list<string>::iterator i = idlist->begin(); i != idlist->end(); i++) {
+  for (list<string>::reverse_iterator i = idlist->rbegin(); i != idlist->rend(); i++) {
     slist->push_front(new decafSymbol(*i, type->clone()));
   }
   $$ = slist;

@@ -68,6 +68,8 @@ public:
 	void push_back(string id) { ids.push_back(id); }
 	list<string>::iterator begin() { return ids.begin(); }
 	list<string>::iterator end() { return ids.end(); }
+	list<string>::reverse_iterator rbegin() { return ids.rbegin(); }
+	list<string>::reverse_iterator rend() { return ids.rend(); }
 };
 
 /// decafStmtList - List of Decaf statements
