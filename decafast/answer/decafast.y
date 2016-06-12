@@ -74,8 +74,9 @@ using namespace std;
 %token T_COMMENT
 
 %type <ast> st_extern decafpackage decaftype methodtype externtype op_cs_externtype cs_externtype method_decl op_cs_idtype cs_idtype decafblock var_decls
-%type <ast> cs_id statements statement assign methodcall boolconstant booleanop arithmeticop binaryop unaryop op_cs_methodarg cs_methodarg methodarg decafexpr
-%type <ast> expr constant lvalue op_returnexpr op_decafexpr op_else cs_assign field_decl arraytype
+%type <ast> cs_id statements statement assign methodcall boolconstant unaryop op_cs_methodarg cs_methodarg methodarg decafexpr
+%type <ast> expr1 expr2 expr3 expr4 expr5 binaryop1 binaryop2 binaryop3 binaryop4 binaryop5
+%type <ast> constant lvalue op_returnexpr op_decafexpr op_else cs_assign field_decl arraytype
 
 %%
 
@@ -133,7 +134,7 @@ field_decl: T_VAR T_ID decaftype T_SEMICOLON field_decl
   id_list->push_front(*$2);
   decafType *type = (decafType *)$5;
   for (list<string>::iterator i = id_list->begin(); i != id_list->end(); i++) {
-    slist->push_front(new FieldDeclAST(*i, type->clone(), new decafFieldSize()));
+    slist->push_back(new FieldDeclAST(*i, type->clone(), new decafFieldSize()));
   }
   $$ = slist;
   delete type;
@@ -146,7 +147,7 @@ field_decl: T_VAR T_ID decaftype T_SEMICOLON field_decl
   decafIdList *id_list = (decafIdList *)$2;
   decafArrayType *at = (decafArrayType *)$3;
   for (list<string>::iterator i = id_list->begin(); i != id_list->end(); i++) {
-    slist->push_front(new FieldDeclAST(*i, at->getType(), new decafFieldSize(at->getSize())));
+    slist->push_back(new FieldDeclAST(*i, at->getType(), new decafFieldSize(at->getSize())));
   }
   $$ = slist;
   delete at;
@@ -273,14 +274,43 @@ statement: decafblock
 }
          ;
 
-decafexpr: expr binaryop decafexpr
+decafexpr: decafexpr binaryop1 expr1
 {
   $$ = new BinaryExprAST((decafBinaryOperator *)$2, (decafExpression *)$1, (decafExpression *)$3);
 }
-         | expr
+         | expr1
          ;
 
-expr: T_ID
+expr1: expr1 binaryop2 expr2
+{
+  $$ = new BinaryExprAST((decafBinaryOperator *)$2, (decafExpression *)$1, (decafExpression *)$3);
+}
+         | expr2
+         ;
+
+
+expr2: expr2 binaryop3 expr3
+{
+  $$ = new BinaryExprAST((decafBinaryOperator *)$2, (decafExpression *)$1, (decafExpression *)$3);
+}
+         | expr3
+         ;
+
+expr3: expr3 binaryop4 expr4
+{
+  $$ = new BinaryExprAST((decafBinaryOperator *)$2, (decafExpression *)$1, (decafExpression *)$3);
+}
+         | expr4
+         ;
+
+expr4: expr4 binaryop5 expr5
+{
+  $$ = new BinaryExprAST((decafBinaryOperator *)$2, (decafExpression *)$1, (decafExpression *)$3);
+}
+         | expr5
+         ;
+
+expr5: T_ID
 {
   $$ = new VariableExprAST(*$1);
   delete $1;
@@ -294,7 +324,7 @@ expr: T_ID
 {
   $$ = (decafExpression *)$2;
 }
-    | unaryop expr
+    | unaryop expr5
 {
   $$ = new UnaryExprAST((decafUnaryOperator *)$1, (decafExpression *)$2);
 }
@@ -315,73 +345,71 @@ unaryop: T_NOT
 }
        ;
 
-binaryop: arithmeticop
-        | booleanop
-        ;
-
-arithmeticop: T_PLUS
-{
-  $$ = new decafPlusOperator();
-}
-            | T_MINUS
-{
-  $$ = new decafMinusOperator();
-}
-            | T_MULT
-{
-  $$ = new decafMultOperator();
-}
-            | T_DIV
-{
-  $$ = new decafDivOperator();
-}
-            | T_LEFTSHIFT
-{
-  $$ = new decafLeftshiftOperator();
-}
-            | T_RIGHTSHIFT
-{
-  $$ = new decafRightshiftOperator();
-}
-            | T_MOD
-{
-  $$ = new decafModOperator();
-}
-            ;
-
-booleanop: T_EQ
-{
-  $$ = new decafEqOperator();
-}
-         | T_NEQ
-{
-  $$ = new decafNeqOperator();
-}
-         | T_LT
-{
-  $$ = new decafLtOperator();
-}
-         | T_LEQ
-{
-  $$ = new decafLeqOperator();
-}
-         | T_GT
-{
-  $$ = new decafGtOperator();
-}
-         | T_GEQ
-{
-  $$ = new decafGeqOperator();
-}
-         | T_AND
-{
-  $$ = new decafAndOperator();
-}
-         | T_OR
+binaryop1: T_OR
 {
   $$ = new decafOrOperator();
 }
-         ;
+
+binaryop2: T_AND
+{
+  $$ = new decafAndOperator();
+}
+
+binaryop3:  T_EQ
+{
+  $$ = new decafEqOperator();
+}
+          | T_NEQ
+{
+  $$ = new decafNeqOperator();
+}
+          | T_LT
+{
+  $$ = new decafLtOperator();
+}
+          | T_LEQ
+{
+  $$ = new decafLeqOperator();
+}
+          | T_GT
+{
+  $$ = new decafGtOperator();
+}
+          | T_GEQ
+{
+  $$ = new decafGeqOperator();
+}
+
+binaryop4: T_PLUS
+{
+  $$ = new decafPlusOperator();
+}
+         | T_MINUS
+{
+  $$ = new decafMinusOperator();
+}
+
+binaryop5: T_MULT
+{
+  $$ = new decafMultOperator();
+}
+         | T_DIV
+{
+  $$ = new decafDivOperator();
+}
+         | T_MOD
+{
+  $$ = new decafModOperator();
+}
+         | T_LEFTSHIFT
+{
+  $$ = new decafLeftshiftOperator();
+}
+         | T_RIGHTSHIFT
+{
+  $$ = new decafRightshiftOperator();
+}
+            ;
 
 op_returnexpr: T_LPAREN op_decafexpr T_RPAREN
 {
@@ -492,7 +520,7 @@ methodarg: decafexpr
 cs_id: T_ID T_COMMA cs_id
 {
   decafIdList *list = (decafIdList *)$3;
-  list->push_back(*$1);
+  list->push_front(*$1);
   $$ = list;
   delete $1;
 }
