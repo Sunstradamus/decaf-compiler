@@ -1,4 +1,5 @@
 output/
+answer/makefile
 iocollect.pyc
 output.zip
 source.zip
