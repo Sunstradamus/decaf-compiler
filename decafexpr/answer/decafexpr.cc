@@ -37,6 +37,7 @@ class decafAST {
 public:
   virtual ~decafAST() {}
   virtual string str() { return string(""); }
+  virtual llvm::Value *Codegen() = 0;
 };
 
 string getString(decafAST *d) {
@@ -59,6 +60,16 @@ string commaList(list<T> vec) {
     return s;
 }
 
+template <class T>
+llvm::Value *listCodegen(list<T> vec) {
+	llvm::Value *val = NULL;
+	for (typename list<T>::iterator i = vec.begin(); i != vec.end(); i++) { 
+		llvm::Value *j = (*i)->Codegen();
+		if (j != NULL) { val = j; }
+	}	
+	return val;
+}
+
 class decafIdList : public decafAST {
 	list<string> ids;
 public:
@@ -70,6 +81,10 @@ public:
 	list<string>::iterator end() { return ids.end(); }
 	list<string>::reverse_iterator rbegin() { return ids.rbegin(); }
 	list<string>::reverse_iterator rend() { return ids.rend(); }
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 /// decafStmtList - List of Decaf statements
@@ -86,6 +101,9 @@ public:
 	void push_front(decafAST *e) { stmts.push_front(e); }
 	void push_back(decafAST *e) { stmts.push_back(e); }
 	string str() { return commaList<class decafAST *>(stmts); }
+	llvm::Value *Codegen() { 
+		return listCodegen<decafAST *>(stmts); 
+	}
 };
 
 class PackageAST : public decafAST {
@@ -102,6 +120,18 @@ public:
 	string str() { 
 		return string("Package") + "(" + Name + "," + getString(FieldDeclList) + "," + getString(MethodDeclList) + ")";
 	}
+	llvm::Value *Codegen() { 
+		llvm::Value *val = NULL;
+		TheModule->setModuleIdentifier(llvm::StringRef(Name)); 
+		if (NULL != FieldDeclList) {
+			val = FieldDeclList->Codegen();
+		}
+		if (NULL != MethodDeclList) {
+			val = MethodDeclList->Codegen();
+		} 
+		// Q: should we enter the class name into the symbol table?
+		return val; 
+	}
 };
 
 /// ProgramAST - the decaf program
@@ -115,6 +145,18 @@ public:
 		if (PackageDef != NULL) { delete PackageDef; }
 	}
 	string str() { return string("Program") + "(" + getString(ExternList) + "," + getString(PackageDef) + ")"; }
+	llvm::Value *Codegen() { 
+		llvm::Value *val = NULL;
+		if (NULL != ExternList) {
+			val = ExternList->Codegen();
+		}
+		if (NULL != PackageDef) {
+			val = PackageDef->Codegen();
+		} else {
+			throw runtime_error("no package definition in decaf program");
+		}
+		return val; 
+	}
 };
 
 // decafReturnType
@@ -133,6 +175,10 @@ public:
 	string str() {
 		return string("IntType");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafBoolType : public decafType {
@@ -145,6 +191,10 @@ public:
 	string str() {
 		return string("BoolType");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafVoidType : public decafType {
@@ -157,6 +207,10 @@ public:
 	string str() {
 		return string("VoidType");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafStringType : public decafType {
@@ -169,6 +223,10 @@ public:
 	string str() {
 		return string("StringType");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafExternType : public decafAST {
@@ -180,7 +238,11 @@ public:
 	}
 	string str() {
 		return string("VarDef(") + getString(Type) + ")";
-	};
+	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class ExternFunctionAST : public decafAST {
@@ -196,6 +258,10 @@ public:
 	string str() {
 		return string("ExternFunction") + "(" + Name + "," + getString(ReturnType) + "," + getString(TypeList) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafSymbol : public decafAST {
@@ -209,6 +275,10 @@ public:
 	string str() {
 		return string("VarDef") + "(" + Name + "," + getString(Type) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafStatement : public decafAST {
@@ -226,6 +296,10 @@ public:
 	string str() {
 		return string("MethodBlock") + "(" + getString(VarList) + "," + getString(StmtList) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class BlockAST : public decafStatement {
@@ -240,6 +314,10 @@ public:
 	string str() {
 		return string("Block") + "(" + getString(VarList) + "," + getString(StmtList) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafBlock : public decafStatement {
@@ -261,6 +339,10 @@ public:
 	string str() {
 		return string("decafBlock") + "(" + getString(VarList) + "," + getString(StmtList) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafOptBlock : public decafStatement {
@@ -275,6 +357,10 @@ public:
 			return string("None");
 		}
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafExpression : public decafStatement {
@@ -287,6 +373,10 @@ public:
 	string str() {
 		return string("None");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafIfStmt : public decafStatement {
@@ -303,6 +393,10 @@ public:
 	string str() {
 		return string("IfStmt") + "(" + getString(Condition) + "," + getString(IfBlock) + "," + getString(ElseBlock) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafWhileStmt : public decafStatement {
@@ -317,6 +411,10 @@ public:
 	string str() {
 		return string("WhileStmt") + "(" + getString(Condition) + "," + getString(WhileBlock) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafForStmt : public decafStatement {
@@ -335,6 +433,10 @@ public:
 	string str() {
 		return string("ForStmt") + "(" + getString(PreAssign) + "," + getString(Condition) + "," + getString(LoopAssign) + "," + getString(ForBlock) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafReturnStmt : public decafStatement {
@@ -347,6 +449,10 @@ public:
 	string str() {
 		return string ("ReturnStmt") + "(" + getString(Value) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafBreakStmt : public decafStatement {
@@ -356,6 +462,10 @@ public:
 	string str() {
 		return string("BreakStmt");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafContinueStmt : public decafStatement {
@@ -365,6 +475,10 @@ public:
 	string str() {
 		return string("ContinueStmt");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class MethodAST : public decafAST {
@@ -382,6 +496,10 @@ public:
 	string str() {
 		return string("Method") + "(" + Name + "," + getString(ReturnType) + "," + getString(SymbolList) + "," + getString(MethodBlock) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class MethodCallAST : public decafExpression {
@@ -395,6 +513,10 @@ public:
 	string str() {
 		return string("MethodCall") + "(" + Name + "," + getString(ArgsList) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafBoolean : public decafAST {
@@ -407,6 +529,10 @@ public:
 	string str() {
 		return string("BoolExpr(True)");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafBoolFalse : public decafBoolean {
@@ -416,6 +542,10 @@ public:
 	string str() {
 		return string("BoolExpr(False)");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafUnaryOperator : public decafAST {
@@ -428,6 +558,10 @@ public:
 	string str() {
 		return string("UnaryMinus");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafNotOperator : public decafUnaryOperator {
@@ -437,6 +571,10 @@ public:
 	string str() {
 		return string("Not");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafBinaryOperator : public decafAST {
@@ -451,6 +589,10 @@ public:
 	string str() {
 		return string("Plus");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafMinusOperator : public decafBinaryOperator {
@@ -460,6 +602,10 @@ public:
 	string str() {
 		return string("Minus");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafMultOperator : public decafBinaryOperator {
@@ -469,6 +615,10 @@ public:
 	string str() {
 		return string("Mult");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafDivOperator : public decafBinaryOperator {
@@ -478,6 +628,10 @@ public:
 	string str() {
 		return string("Div");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafLeftshiftOperator : public decafBinaryOperator {
@@ -487,6 +641,10 @@ public:
 	string str() {
 		return string("Leftshift");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafRightshiftOperator : public decafBinaryOperator {
@@ -496,6 +654,10 @@ public:
 	string str() {
 		return string("Rightshift");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafModOperator : public decafBinaryOperator {
@@ -505,6 +667,10 @@ public:
 	string str() {
 		return string("Mod");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 // booleanop
@@ -516,6 +682,10 @@ public:
 	string str() {
 		return string("Lt");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafGtOperator : public decafBinaryOperator {
@@ -525,6 +695,10 @@ public:
 	string str() {
 		return string("Gt");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafLeqOperator : public decafBinaryOperator {
@@ -534,6 +708,10 @@ public:
 	string str() {
 		return string("Leq");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafGeqOperator : public decafBinaryOperator {
@@ -543,6 +721,10 @@ public:
 	string str() {
 		return string("Geq");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafEqOperator : public decafBinaryOperator {
@@ -552,6 +734,10 @@ public:
 	string str() {
 		return string("Eq");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafNeqOperator : public decafBinaryOperator {
@@ -561,6 +747,10 @@ public:
 	string str() {
 		return string("Neq");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafAndOperator : public decafBinaryOperator {
@@ -570,6 +760,10 @@ public:
 	string str() {
 		return string("And");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafOrOperator : public decafBinaryOperator {
@@ -579,6 +773,10 @@ public:
 	string str() {
 		return string("Or");
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class VariableExprAST : public decafExpression {
@@ -589,6 +787,10 @@ public:
 	string str() {
 		return string("VariableExpr") + "(" + Name + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class ArrayLocExprAST : public decafExpression {
@@ -602,6 +804,10 @@ public:
 	string str() {
 		return string("ArrayLocExpr") + "(" + Name + "," + getString(Index) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class UnaryExprAST : public decafExpression {
@@ -616,22 +822,48 @@ public:
 	string str() {
 		return string("UnaryExpr") + "(" + getString(Operator) + "," + getString(Expression) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class BinaryExprAST : public decafExpression {
-	decafBinaryOperator *Operator;
+	decafBinaryOperator *Op;
 	decafExpression *Left;
 	decafExpression *Right;
 public:
-	BinaryExprAST(decafBinaryOperator *op, decafExpression *left, decafExpression *right) : Operator(op), Left(left), Right(right) {}
+	BinaryExprAST(decafBinaryOperator *op, decafExpression *left, decafExpression *right) : Op(op), Left(left), Right(right) {}
 	~BinaryExprAST() {
-		if (Operator != NULL) { delete Operator; }
+		if (Op != NULL) { delete Op; }
 		if (Left != NULL) { delete Left; }
 		if (Right != NULL) { delete Right; }
 	}
 	string str() {
-		return string("BinaryExpr") + "(" + getString(Operator) + "," + getString(Left) + "," + getString(Right) + ")";
+		return string("BinaryExpr") + "(" + getString(Op) + "," + getString(Left) + "," + getString(Right) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *L = Left->Codegen();
+        llvm::Value *R = Right->Codegen();
+        if (L == 0 || R == 0) return 0;
+
+        if (Op->str().compare("+") == 0)  return Builder.CreateAdd(L, R, "addtmp");
+        if (Op->str().compare("-") == 0)  return Builder.CreateSub(L, R, "subtmp");
+        if (Op->str().compare("*") == 0)  return Builder.CreateMul(L, R, "multmp");
+        if (Op->str().compare("/") == 0)  return Builder.CreateSDiv(L, R, "divtmp");
+        if (Op->str().compare("%") == 0)  return Builder.CreateSRem(L, R, "modtmp");
+        if (Op->str().compare(">>") == 0) return Builder.CreateAShr(L, R, "rshtmp");
+        if (Op->str().compare("<<") == 0) return Builder.CreateShl(L, R, "lshtmp");
+        if (Op->str().compare("&&") == 0) return Builder.CreateAnd(L, R, "andtmp");
+        if (Op->str().compare("||") == 0) return Builder.CreateOr(L, R, "ortmp");
+        if (Op->str().compare("<") == 0)  return Builder.CreateICmpSLT(L, R, "lttmp");
+        if (Op->str().compare(">") == 0)  return Builder.CreateICmpSGT(L, R, "gttmp");
+        if (Op->str().compare("<=") == 0) return Builder.CreateICmpSLE(L, R, "letmp");
+        if (Op->str().compare(">=") == 0) return Builder.CreateICmpSGE(L, R, "getmp");
+        if (Op->str().compare("==") == 0) return Builder.CreateICmpEQ(L, R, "eqtmp");
+        if (Op->str().compare("!=") == 0) return Builder.CreateICmpNE(L, R, "neqtmp");
+        return NULL;
+    }
 };
 
 class NumberExprAST : public decafExpression {
@@ -648,6 +880,10 @@ public:
 	string str() {
 		return string("NumberExpr") + "(" + Value + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class StringConstantAST : public decafExpression {
@@ -658,6 +894,10 @@ public:
 	string str() {
 		return string("StringConstant") + "(" + Value + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafLValue : public decafAST {
@@ -686,6 +926,10 @@ public:
 	decafExpression* getIndex() {
 		return Index;
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class AssignVarAST : public decafStatement {
@@ -699,6 +943,10 @@ public:
 	string str() {
 		return string("AssignVar") + "(" + Name + "," + getString(Expression) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class AssignArrayLocAST : public decafStatement {
@@ -714,6 +962,10 @@ public:
 	string str() {
 		return string("AssignArrayLoc") + "(" + Name + "," + getString(Index) + "," + getString(Expression) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafArrayType : public decafAST {
@@ -724,6 +976,10 @@ public:
 	~decafArrayType() {}
 	string getSize() { return ArraySize; }
 	decafType* getType() { return Type; }
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class decafFieldSize : public decafAST {
@@ -744,6 +1000,10 @@ public:
 			return string("Scalar");
 		}
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class FieldDeclAST : public decafAST {
@@ -759,6 +1019,10 @@ public:
 	string str() {
 		return string("FieldDecl") + "(" + Name + "," + getString(Type) + "," + getString(FieldSize) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
 
 class AssignGlobalVarAST : public decafAST {
@@ -774,4 +1038,8 @@ public:
 	string str() {
 		return string("AssignGlobalVar") + "(" + Name + "," + getString(Type) + "," + getString(Expression) + ")";
 	}
+    llvm::Value *Codegen() {
+        llvm::Value *val = NULL;
+        return val;
+    }
 };
