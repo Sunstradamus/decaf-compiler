@@ -9,7 +9,7 @@ int yylex(void);
 int yyerror(char *); 
 
 // print AST?
-bool printAST = true;
+bool printAST = false;
 
 using namespace std;
 
@@ -123,6 +123,14 @@ program: st_extern decafpackage
   ProgramAST *prog = new ProgramAST((decafStmtList *)$1, (PackageAST *)$2); 
   if (printAST) {
       cout << getString(prog) << endl;
+  }
+  try {
+    prog->Codegen();
+  } 
+  catch (std::runtime_error &e) {
+    cout << "semantic error: " << e.what() << endl;
+    //cout << prog->str() << endl; 
+    exit(EXIT_FAILURE);
   }
   delete prog;
 }
@@ -715,9 +723,26 @@ constant: T_INTCONSTANT
 
 %%
 
-int main() {
+int main() {  // initialize LLVM
+  llvm::LLVMContext &Context = llvm::getGlobalContext();
+  // Make the module, which holds all the code.
+  TheModule = new llvm::Module("Test", Context);
+  // set up symbol table
+
+  // set up dummy main function
+  //TheFunction = gen_main_def();
   // parse the input and create the abstract syntax tree
   int retval = yyparse();
+  // remove symbol table
+
+  // Finish off the main function.
+  
+  // return 0 from main, which is EXIT_SUCCESS
+  //  Builder.CreateRet(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 0)));
+  // Validate the generated code, checking for consistency.
+  //  verifyFunction(*TheFunction);
+  // Print out all of the generated code to stderr
+  TheModule->dump();
   return(retval >= 1 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 

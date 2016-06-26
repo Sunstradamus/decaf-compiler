@@ -1,4 +1,4 @@
-llvmconfig=llvm-config-mp-3.8
+llvmconfig=llvm-config-3.8
 cppflags=-std=c++11 -Wno-deprecated-register
 lexlib=l
 yacclib=y
@@ -46,8 +46,8 @@ $(llvmcpp): %: %.cc
 
 $(llvmfiles): %: %.ll
 	@echo "using llvm to compile file:" $<
-	$(shell $(llvmconfig) --bindir)/llvm-as-mp-3.8 $<
-	$(shell $(llvmconfig) --bindir)/llc-mp-3.8 $@.bc
+	$(shell $(llvmconfig) --bindir)/llvm-as $<
+	$(shell $(llvmconfig) --bindir)/llc $@.bc
 	gcc $@.s decaf-stdlib.c -o $(bindir)/$@
 
 clean:

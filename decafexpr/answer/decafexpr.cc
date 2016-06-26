@@ -4,6 +4,7 @@
 #include <ostream>
 #include <iostream>
 #include <sstream>
+#include <assert.h>
 
 #ifndef YYTOKENTYPE
 #include "decafexpr.tab.h"
@@ -100,6 +101,8 @@ public:
 	int size() { return stmts.size(); }
 	void push_front(decafAST *e) { stmts.push_front(e); }
 	void push_back(decafAST *e) { stmts.push_back(e); }
+	list<decafAST *>::iterator begin() { return stmts.begin(); }
+	list<decafAST *>::iterator end() { return stmts.end(); }
 	string str() { return commaList<class decafAST *>(stmts); }
 	llvm::Value *Codegen() { 
 		return listCodegen<decafAST *>(stmts); 
@@ -163,6 +166,8 @@ public:
 class decafType : public decafAST {
 public:
 	virtual decafType* clone() const = 0;
+    virtual llvm::Type *LLVMType() = 0;
+    llvm::Value *Codegen() {return NULL;}
 };
 
 class decafIntType : public decafType {
@@ -175,9 +180,8 @@ public:
 	string str() {
 		return string("IntType");
 	}
-    llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+    llvm::Type *LLVMType() {
+        return Builder.getInt32Ty();
     }
 };
 
@@ -191,9 +195,8 @@ public:
 	string str() {
 		return string("BoolType");
 	}
-    llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+    llvm::Type *LLVMType() {
+        return Builder.getInt1Ty();
     }
 };
 
@@ -207,9 +210,8 @@ public:
 	string str() {
 		return string("VoidType");
 	}
-    llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+    llvm::Type *LLVMType() {
+        return Builder.getVoidTy();
     }
 };
 
@@ -223,8 +225,8 @@ public:
 	string str() {
 		return string("StringType");
 	}
-    llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
+    llvm::Type *LLVMType() {
+        llvm::Type *val = NULL;
         return val;
     }
 };
@@ -239,9 +241,9 @@ public:
 	string str() {
 		return string("VarDef(") + getString(Type) + ")";
 	}
-    llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+    llvm::Value *Codegen() { return NULL; }
+    llvm::Type *LLVMType() {
+        return Type->LLVMType();
     }
 };
 
@@ -258,11 +260,21 @@ public:
 	string str() {
 		return string("ExternFunction") + "(" + Name + "," + getString(ReturnType) + "," + getString(TypeList) + ")";
 	}
-    llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+
+    llvm::Function *Codegen() {
+        vector<llvm::Type *> Params;
+        for (auto i = TypeList->begin(); i != TypeList->end(); i++) {
+            decafExternType *dtype = dynamic_cast<decafExternType *>(*i);
+            llvm::Type *type = dtype->LLVMType();
+            assert(type != NULL);
+            Params.push_back(type);
+        }
+        llvm::FunctionType *FT = llvm::FunctionType::get((llvm::Type *)ReturnType->LLVMType(), Params, false);
+        llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, Name, TheModule);
+        return F;
     }
 };
+
 
 class decafSymbol : public decafAST {
 	string Name;
@@ -297,8 +309,14 @@ public:
 		return string("MethodBlock") + "(" + getString(VarList) + "," + getString(StmtList) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+		llvm::Value *val = NULL;
+		if (NULL != VarList) {
+			val = VarList->Codegen();
+		}
+		if (NULL != StmtList) {
+			val = StmtList->Codegen();
+		} 
+		return val;
     }
 };
 
@@ -496,9 +514,25 @@ public:
 	string str() {
 		return string("Method") + "(" + Name + "," + getString(ReturnType) + "," + getString(SymbolList) + "," + getString(MethodBlock) + ")";
 	}
-    llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+    llvm::Function *Codegen() {
+        llvm::FunctionType *FT = llvm::FunctionType::get((llvm::Type *)ReturnType->LLVMType(), false);
+        llvm::Function *TheFunction = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, Name, TheModule);
+        if (TheFunction == 0) {
+            throw runtime_error("empty function block"); 
+        }
+        // Create a new basic block which contains a sequence of LLVM instructions
+        llvm::BasicBlock *BB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "entry", TheFunction);
+        // All subsequent calls to IRBuilder will place instructions in this location
+        Builder.SetInsertPoint(BB);
+        auto retValue = MethodBlock->Codegen();
+        if (Name.compare("main") == 0) {
+            Builder.CreateRet(Builder.getInt32(0));
+        }
+        else {
+            Builder.CreateRet(retValue);
+        }
+        verifyFunction(*TheFunction);
+        return TheFunction;
     }
 };
 
@@ -513,9 +547,30 @@ public:
 	string str() {
 		return string("MethodCall") + "(" + Name + "," + getString(ArgsList) + ")";
 	}
+ 
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        llvm::Function *method = TheModule->getFunction(Name);
+        assert(method != NULL);
+        std::vector<llvm::Value *> args;
+        for (auto i = ArgsList->begin(); i != ArgsList->end(); i++) {
+            args.push_back((*i)->Codegen());
+            if (!args.back()) return NULL;
+        }
+
+        // Convert any bool type parameters into integer type if that is required
+        int count = 0;
+        for (auto i = method->arg_begin(); i != method->arg_end(); i++) {
+            if (i->getType()->isIntegerTy(32) && args[count]->getType()->isIntegerTy(1)) {
+                args[count] = Builder.CreateIntCast(args[count], Builder.getInt32Ty(), false);
+            }
+            count++;
+        }
+        
+        // Don't make an assignment if the return type is void
+        if (method->getReturnType()->isVoidTy()) {
+            return Builder.CreateCall(method, args);
+        }
+        return Builder.CreateCall(method, args, "calltmp");
     }
 };
 
@@ -530,8 +585,7 @@ public:
 		return string("BoolExpr(True)");
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        return Builder.getInt1(1);
     }
 };
 
@@ -543,8 +597,7 @@ public:
 		return string("BoolExpr(False)");
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        return Builder.getInt1(0);
     }
 };
 
@@ -847,21 +900,21 @@ public:
         llvm::Value *R = Right->Codegen();
         if (L == 0 || R == 0) return 0;
 
-        if (Op->str().compare("+") == 0)  return Builder.CreateAdd(L, R, "addtmp");
-        if (Op->str().compare("-") == 0)  return Builder.CreateSub(L, R, "subtmp");
-        if (Op->str().compare("*") == 0)  return Builder.CreateMul(L, R, "multmp");
-        if (Op->str().compare("/") == 0)  return Builder.CreateSDiv(L, R, "divtmp");
-        if (Op->str().compare("%") == 0)  return Builder.CreateSRem(L, R, "modtmp");
-        if (Op->str().compare(">>") == 0) return Builder.CreateAShr(L, R, "rshtmp");
-        if (Op->str().compare("<<") == 0) return Builder.CreateShl(L, R, "lshtmp");
-        if (Op->str().compare("&&") == 0) return Builder.CreateAnd(L, R, "andtmp");
-        if (Op->str().compare("||") == 0) return Builder.CreateOr(L, R, "ortmp");
-        if (Op->str().compare("<") == 0)  return Builder.CreateICmpSLT(L, R, "lttmp");
-        if (Op->str().compare(">") == 0)  return Builder.CreateICmpSGT(L, R, "gttmp");
-        if (Op->str().compare("<=") == 0) return Builder.CreateICmpSLE(L, R, "letmp");
-        if (Op->str().compare(">=") == 0) return Builder.CreateICmpSGE(L, R, "getmp");
-        if (Op->str().compare("==") == 0) return Builder.CreateICmpEQ(L, R, "eqtmp");
-        if (Op->str().compare("!=") == 0) return Builder.CreateICmpNE(L, R, "neqtmp");
+        if (Op->str().compare("Plus") == 0)  return Builder.CreateAdd(L, R, "addtmp");
+        if (Op->str().compare("Minus") == 0)  return Builder.CreateSub(L, R, "subtmp");
+        if (Op->str().compare("Mult") == 0)  return Builder.CreateMul(L, R, "multmp");
+        if (Op->str().compare("Div") == 0)  return Builder.CreateSDiv(L, R, "divtmp");
+        if (Op->str().compare("Mod") == 0)  return Builder.CreateSRem(L, R, "modtmp");
+        if (Op->str().compare("Rightshift") == 0) return Builder.CreateAShr(L, R, "rshtmp");
+        if (Op->str().compare("Leftshift") == 0) return Builder.CreateShl(L, R, "lshtmp");
+        if (Op->str().compare("And") == 0) return Builder.CreateAnd(L, R, "andtmp");
+        if (Op->str().compare("Or") == 0) return Builder.CreateOr(L, R, "ortmp");
+        if (Op->str().compare("Lt") == 0)  return Builder.CreateICmpSLT(L, R, "lttmp");
+        if (Op->str().compare("Gt") == 0)  return Builder.CreateICmpSGT(L, R, "gttmp");
+        if (Op->str().compare("Leq") == 0) return Builder.CreateICmpSLE(L, R, "letmp");
+        if (Op->str().compare("Geq") == 0) return Builder.CreateICmpSGE(L, R, "getmp");
+        if (Op->str().compare("Eq") == 0) return Builder.CreateICmpEQ(L, R, "eqtmp");
+        if (Op->str().compare("Neq") == 0) return Builder.CreateICmpNE(L, R, "neqtmp");
         return NULL;
     }
 };
@@ -881,8 +934,7 @@ public:
 		return string("NumberExpr") + "(" + Value + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        return Builder.getInt32(stoi(Value));
     }
 };
 
@@ -1043,3 +1095,4 @@ public:
         return val;
     }
 };
+

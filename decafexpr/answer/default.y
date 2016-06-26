@@ -65,9 +65,9 @@ start: program
 program: extern_list decafpackage
     { 
         ProgramAST *prog = new ProgramAST((decafStmtList *)$1, (PackageAST *)$2); 
-		if (printAST) {
-			cout << getString(prog) << endl;
-		}
+        if (printAST) {
+          cout << getString(prog) << endl;
+        }
         try {
             prog->Codegen();
         } 
