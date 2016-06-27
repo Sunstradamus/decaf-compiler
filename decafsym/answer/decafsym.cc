@@ -1,6 +1,7 @@
 
 #include "decafsym-defs.h"
 #include <list>
+#include <map>
 #include <ostream>
 #include <iostream>
 #include <sstream>
@@ -31,12 +32,43 @@ class decafStatement;
 class decafBlock;
 class decafBreakStmt;
 class decafContinueStmt;
+class symbol;
+
+typedef map<string, symbol*> symbol_table;
+
+enum symType { DECAF_INT, DECAF_BOOL, DECAF_VOID, DECAF_STRING };
+
+class symbol {
+public:
+	symType type;
+	unsigned int regDest;
+	unsigned int address;
+	bool spilled;
+};
 
 /// decafAST - Base class for all abstract syntax tree nodes.
 class decafAST {
+protected:
+	decafAST *parent;
+	symbol_table symTable;
 public:
   virtual ~decafAST() {}
   virtual string str() { return string(""); }
+  void setParent(decafAST *node) {
+  	this->parent = node;
+  }
+  symbol* access_symtbl(string ident) {
+  	map<string,symbol*>::iterator it = symTable.find(ident);
+  	if (it != symTable.end()) {
+  		return it->second;
+  	} else {
+  		if (parent == NULL) {
+  			return NULL;
+  		} else {
+  			return parent->access_symtbl(ident);
+  		}
+  	}
+  }
 };
 
 string getString(decafAST *d) {
@@ -85,42 +117,16 @@ public:
 	int size() { return stmts.size(); }
 	void push_front(decafAST *e) { stmts.push_front(e); }
 	void push_back(decafAST *e) { stmts.push_back(e); }
+	list<decafAST *>::iterator begin() { return stmts.begin(); }
+	list<decafAST *>::iterator end() { return stmts.end(); }
 	string str() { return commaList<class decafAST *>(stmts); }
-};
-
-class PackageAST : public decafAST {
-	string Name;
-	decafStmtList *FieldDeclList;
-	decafStmtList *MethodDeclList;
-public:
-	PackageAST(string name, decafStmtList *fieldlist, decafStmtList *methodlist) 
-		: Name(name), FieldDeclList(fieldlist), MethodDeclList(methodlist) {}
-	~PackageAST() { 
-		if (FieldDeclList != NULL) { delete FieldDeclList; }
-		if (MethodDeclList != NULL) { delete MethodDeclList; }
-	}
-	string str() { 
-		return string("Package") + "(" + Name + "," + getString(FieldDeclList) + "," + getString(MethodDeclList) + ")";
-	}
-};
-
-/// ProgramAST - the decaf program
-class ProgramAST : public decafAST {
-	decafStmtList *ExternList;
-	PackageAST *PackageDef;
-public:
-	ProgramAST(decafStmtList *externs, PackageAST *c) : ExternList(externs), PackageDef(c) {}
-	~ProgramAST() { 
-		if (ExternList != NULL) { delete ExternList; } 
-		if (PackageDef != NULL) { delete PackageDef; }
-	}
-	string str() { return string("Program") + "(" + getString(ExternList) + "," + getString(PackageDef) + ")"; }
 };
 
 // decafReturnType
 class decafType : public decafAST {
 public:
 	virtual decafType* clone() const = 0;
+	virtual symType getSymType() const = 0;
 };
 
 class decafIntType : public decafType {
@@ -129,6 +135,9 @@ public:
 	~decafIntType() {}
 	decafType* clone() const {
 		return new decafIntType();
+	}
+	symType getSymType() const {
+		return DECAF_INT;
 	}
 	string str() {
 		return string("IntType");
@@ -142,6 +151,9 @@ public:
 	decafType* clone() const {
 		return new decafBoolType();
 	}
+	symType getSymType() const {
+		return DECAF_BOOL;
+	}
 	string str() {
 		return string("BoolType");
 	}
@@ -153,6 +165,9 @@ public:
 	~decafVoidType() {}
 	decafType* clone() const {
 		return new decafVoidType();
+	}
+	symType getSymType() const {
+		return DECAF_VOID;
 	}
 	string str() {
 		return string("VoidType");
@@ -166,6 +181,9 @@ public:
 	decafType* clone() const {
 		return new decafStringType();
 	}
+	symType getSymType() const {
+		return DECAF_STRING;
+	}
 	string str() {
 		return string("StringType");
 	}
@@ -174,7 +192,9 @@ public:
 class decafExternType : public decafAST {
 	decafType *Type;
 public:
-	decafExternType(decafType *type) : Type(type) {}
+	decafExternType(decafType *type) : Type(type) {
+		if (Type != NULL) { Type->setParent((decafAST *)this); }
+	}
 	~decafExternType() {
 		if (Type != NULL) { delete Type; }
 	}
@@ -188,7 +208,10 @@ class ExternFunctionAST : public decafAST {
 	decafType *ReturnType;
 	decafStmtList *TypeList;
 public:
-	ExternFunctionAST(string name, decafType *ret_type, decafStmtList *typelist) : Name(name), ReturnType(ret_type), TypeList(typelist) {}
+	ExternFunctionAST(string name, decafType *ret_type, decafStmtList *typelist) : Name(name), ReturnType(ret_type), TypeList(typelist) {
+		if (ReturnType != NULL) { ReturnType->setParent((decafAST *)this); }
+		if (TypeList != NULL) { TypeList->setParent((decafAST *)this); }
+	}
 	~ExternFunctionAST() {
 		if (ReturnType != NULL) { delete ReturnType; }
 		if (TypeList != NULL) { delete TypeList; }
@@ -202,9 +225,17 @@ class decafSymbol : public decafAST {
 	string Name;
 	decafType *Type;
 public:
-	decafSymbol(string name, decafType *type) : Name(name), Type(type) {}
+	decafSymbol(string name, decafType *type) : Name(name), Type(type) {
+		if (Type != NULL) { Type->setParent((decafAST *)this); }
+	}
 	~decafSymbol() {
 		if (Type != NULL) { delete Type; }
+	}
+	string getName() {
+		return Name;
+	}
+	decafType* getType() {
+		return Type;
 	}
 	string str() {
 		return string("VarDef") + "(" + Name + "," + getString(Type) + ")";
@@ -218,10 +249,55 @@ class MethodBlockAST : public decafAST {
 	decafStmtList *VarList;
 	decafStmtList *StmtList;
 public:
-	MethodBlockAST(decafStmtList *varlist, decafStmtList *stmtlist) : VarList(varlist), StmtList(stmtlist) {}
+	MethodBlockAST(decafStmtList *varlist, decafStmtList *stmtlist) : VarList(varlist), StmtList(stmtlist) {
+		if (VarList != NULL) { VarList->setParent((decafAST *)this); }
+		if (StmtList != NULL) { StmtList->setParent((decafAST *)this); }
+
+		// Process method block var decls
+		for (list<decafAST*>::iterator it = VarList->begin(); it != VarList->end(); it++) {
+			decafAST *obj = *it;
+			decafSymbol *var = static_cast<decafSymbol*>(obj);
+			string identifier = var->getName();
+			decafType *type = var->getType();
+			symbol *sym = new symbol();
+
+			sym->type = type->getSymType();
+			sym->regDest = 0;
+			sym->address = 0;
+			sym->spilled = 0;
+
+			this->symTable.insert(pair<string,symbol*>(identifier, sym));
+		}
+		//cout << "MethodBlock SymTable size: " << this->symTable.size() << endl;
+	}
 	~MethodBlockAST() {
 		if (VarList != NULL) { delete VarList; }
 		if (StmtList != NULL) { delete StmtList; }
+	}
+	bool addMethodParamSymbols(decafStmtList *SymbolList) {
+		pair<map<string,symbol*>::iterator,bool> ret;
+
+		// Process method params
+		for (list<decafAST*>::iterator it = SymbolList->begin(); it != SymbolList->end(); it++) {
+			decafAST *obj = *it;
+			decafSymbol *var = static_cast<decafSymbol*>(obj);
+			string identifier = var->getName();
+			decafType *type = var->getType();
+			symbol *sym = new symbol();
+
+			sym->type = type->getSymType();
+			sym->regDest = 0;
+			sym->address = 0;
+			sym->spilled = 0;
+
+			ret = this->symTable.insert(pair<string,symbol*>(identifier, sym));
+			if (ret.second == false) {
+				// Failed to insert method parameter symbols into the symbol table
+				// Another symbol with the same identifier exists
+				return false;
+			}
+		}
+		//cout << "Method_Decl SymTable size: " << this->symTable.size() << endl;
 	}
 	string str() {
 		return string("MethodBlock") + "(" + getString(VarList) + "," + getString(StmtList) + ")";
@@ -232,7 +308,27 @@ class BlockAST : public decafStatement {
 	decafStmtList *VarList;
 	decafStmtList *StmtList;
 public:
-	BlockAST(decafStmtList *varlist, decafStmtList *stmtlist) : VarList(varlist), StmtList(stmtlist) {}
+	BlockAST(decafStmtList *varlist, decafStmtList *stmtlist) : VarList(varlist), StmtList(stmtlist) {
+		if (VarList != NULL) { VarList->setParent((decafAST *)this); }
+		if (StmtList != NULL) { StmtList->setParent((decafAST *)this); }
+
+		// Process method block var decls
+		for (list<decafAST*>::iterator it = VarList->begin(); it != VarList->end(); it++) {
+			decafAST *obj = *it;
+			decafSymbol *var = static_cast<decafSymbol*>(obj);
+			string identifier = var->getName();
+			decafType *type = var->getType();
+			symbol *sym = new symbol();
+
+			sym->type = type->getSymType();
+			sym->regDest = 0;
+			sym->address = 0;
+			sym->spilled = 0;
+
+			this->symTable.insert(pair<string,symbol*>(identifier, sym));
+		}
+		//cout << "Block SymTable size: " << this->symTable.size() << endl;
+	}
 	~BlockAST() {
 		if (VarList != NULL) { delete VarList; }
 		if (StmtList != NULL) { delete StmtList; }
@@ -266,8 +362,12 @@ public:
 class decafOptBlock : public decafStatement {
 	BlockAST *Block;
 public:
-	decafOptBlock(BlockAST *block) : Block(block) {}
-	~decafOptBlock() {}
+	decafOptBlock(BlockAST *block) : Block(block) {
+		if (Block != NULL) { Block->setParent((decafAST *)this); }
+	}
+	~decafOptBlock() {
+		if (Block != NULL) { delete Block; }
+	}
 	string str() {
 		if (Block != NULL) {
 			return getString(Block);
@@ -294,7 +394,11 @@ class decafIfStmt : public decafStatement {
 	BlockAST *IfBlock;
 	decafOptBlock *ElseBlock;
 public:
-	decafIfStmt(decafExpression *cond, BlockAST *ifblock, decafOptBlock *elseblock) : Condition(cond), IfBlock(ifblock), ElseBlock(elseblock) {}
+	decafIfStmt(decafExpression *cond, BlockAST *ifblock, decafOptBlock *elseblock) : Condition(cond), IfBlock(ifblock), ElseBlock(elseblock) {
+		if (Condition != NULL) { Condition->setParent((decafAST *)this); }
+		if (IfBlock != NULL) { IfBlock->setParent((decafAST *)this); }
+		if (ElseBlock != NULL) { ElseBlock->setParent((decafAST *)this); }
+	}
 	~decafIfStmt() {
 		if (Condition != NULL) { delete Condition; }
 		if (IfBlock != NULL) { delete IfBlock; }
@@ -309,7 +413,10 @@ class decafWhileStmt : public decafStatement {
 	decafExpression *Condition;
 	BlockAST *WhileBlock;
 public:
-	decafWhileStmt(decafExpression *cond, BlockAST *blk) : Condition(cond), WhileBlock(blk) {}
+	decafWhileStmt(decafExpression *cond, BlockAST *blk) : Condition(cond), WhileBlock(blk) {
+		if (Condition != NULL) { Condition->setParent((decafAST *)this); }
+		if (WhileBlock != NULL) { WhileBlock->setParent((decafAST *)this); }
+	}
 	~decafWhileStmt() {
 		if (Condition != NULL) { delete Condition; }
 		if (WhileBlock != NULL) { delete WhileBlock; }
@@ -325,7 +432,12 @@ class decafForStmt : public decafStatement {
 	decafStmtList *LoopAssign;
 	BlockAST *ForBlock;
 public:
-	decafForStmt(decafStmtList *pa, decafExpression *cond, decafStmtList *la, BlockAST *fb) : PreAssign(pa), Condition(cond), LoopAssign(la), ForBlock(fb) {}
+	decafForStmt(decafStmtList *pa, decafExpression *cond, decafStmtList *la, BlockAST *fb) : PreAssign(pa), Condition(cond), LoopAssign(la), ForBlock(fb) {
+		if (PreAssign != NULL) { PreAssign->setParent((decafAST *)this); }
+		if (Condition != NULL) { Condition->setParent((decafAST *)this); }
+		if (LoopAssign != NULL) { LoopAssign->setParent((decafAST *)this); }
+		if (ForBlock != NULL) { ForBlock->setParent((decafAST *)this); }
+	}
 	~decafForStmt() {
 		if (PreAssign != NULL) { delete PreAssign; }
 		if (Condition != NULL) { delete Condition; }
@@ -340,7 +452,9 @@ public:
 class decafReturnStmt : public decafStatement {
 	decafExpression *Value;
 public:
-	decafReturnStmt(decafExpression *val) : Value(val) {}
+	decafReturnStmt(decafExpression *val) : Value(val) {
+		if (Value != NULL) { Value->setParent((decafAST *)this); }
+	}
 	~decafReturnStmt() {
 		if (Value != NULL) { delete Value; }
 	}
@@ -373,7 +487,13 @@ class MethodAST : public decafAST {
 	decafStmtList *SymbolList;
 	MethodBlockAST *MethodBlock;
 public:
-	MethodAST(string name, decafType *rt, decafStmtList *sl, MethodBlockAST *mb) : Name(name), ReturnType(rt), SymbolList(sl), MethodBlock(mb) {}
+	MethodAST(string name, decafType *rt, decafStmtList *sl, MethodBlockAST *mb) : Name(name), ReturnType(rt), SymbolList(sl), MethodBlock(mb) {
+		if (ReturnType != NULL) { ReturnType->setParent((decafAST *)this); }
+		if (SymbolList != NULL) { SymbolList->setParent((decafAST *)this); }
+		if (MethodBlock != NULL) { MethodBlock->setParent((decafAST *)this); }
+
+		MethodBlock->addMethodParamSymbols(SymbolList);
+	}
 	~MethodAST() {
 		if (ReturnType != NULL) { delete ReturnType; }
 		if (SymbolList != NULL) { delete SymbolList; }
@@ -388,7 +508,9 @@ class MethodCallAST : public decafExpression {
 	string Name;
 	decafStmtList *ArgsList;
 public:
-	MethodCallAST(string name, decafStmtList *args) : Name(name), ArgsList(args) {}
+	MethodCallAST(string name, decafStmtList *args) : Name(name), ArgsList(args) {
+		if (ArgsList != NULL) { ArgsList->setParent((decafAST *)this); }
+	}
 	~MethodCallAST() {
 		if (ArgsList != NULL) { delete ArgsList; }
 	}
@@ -595,7 +717,9 @@ class ArrayLocExprAST : public decafExpression {
 	string Name;
 	decafExpression *Index;
 public:
-	ArrayLocExprAST(string name, decafExpression *index) : Name(name), Index(index) {}
+	ArrayLocExprAST(string name, decafExpression *index) : Name(name), Index(index) {
+		if (Index != NULL) { Index->setParent((decafAST *)this); }
+	}
 	~ArrayLocExprAST() {
 		if (Index != NULL) { delete Index; }
 	}
@@ -608,7 +732,10 @@ class UnaryExprAST : public decafExpression {
 	decafUnaryOperator *Operator;
 	decafExpression *Expression;
 public:
-	UnaryExprAST(decafUnaryOperator *op, decafExpression *exp) : Operator(op), Expression(exp) {}
+	UnaryExprAST(decafUnaryOperator *op, decafExpression *exp) : Operator(op), Expression(exp) {
+		if (Operator != NULL) { Operator->setParent((decafAST *)this); }
+		if (Expression != NULL) { Expression->setParent((decafAST *)this); }
+	}
 	~UnaryExprAST() {
 		if (Operator != NULL) { delete Operator; }
 		if (Expression != NULL) { delete Expression; }
@@ -623,7 +750,11 @@ class BinaryExprAST : public decafExpression {
 	decafExpression *Left;
 	decafExpression *Right;
 public:
-	BinaryExprAST(decafBinaryOperator *op, decafExpression *left, decafExpression *right) : Operator(op), Left(left), Right(right) {}
+	BinaryExprAST(decafBinaryOperator *op, decafExpression *left, decafExpression *right) : Operator(op), Left(left), Right(right) {
+		if (Operator != NULL) { Operator->setParent((decafAST *)this); }
+		if (Left != NULL) { Left->setParent((decafAST *)this); }
+		if (Right != NULL) { Right->setParent((decafAST *)this); }
+	}
 	~BinaryExprAST() {
 		if (Operator != NULL) { delete Operator; }
 		if (Left != NULL) { delete Left; }
@@ -692,7 +823,9 @@ class AssignVarAST : public decafStatement {
 	string Name;
 	decafExpression *Expression;
 public:
-	AssignVarAST(string name, decafExpression *value) : Name(name), Expression(value) {}
+	AssignVarAST(string name, decafExpression *value) : Name(name), Expression(value) {
+		if (Expression != NULL) { Expression->setParent((decafAST *)this); }
+	}
 	~AssignVarAST() {
 		if (Expression != NULL) { delete Expression; }
 	}
@@ -706,7 +839,10 @@ class AssignArrayLocAST : public decafStatement {
 	decafExpression *Index;
 	decafExpression *Expression;
 public:
-	AssignArrayLocAST(string name, decafExpression *index, decafExpression *value) : Name(name), Index(index), Expression(value) {}
+	AssignArrayLocAST(string name, decafExpression *index, decafExpression *value) : Name(name), Index(index), Expression(value) {
+		if (Index != NULL) { Index->setParent((decafAST *)this); }
+		if (Expression != NULL) { Expression->setParent((decafAST *)this); }
+	}
 	~AssignArrayLocAST() {
 		if (Index != NULL) { delete Index; }
 		if (Expression != NULL) { delete Expression; }
@@ -751,10 +887,19 @@ class FieldDeclAST : public decafAST {
 	decafType *Type;
 	decafFieldSize *FieldSize;
 public:
-	FieldDeclAST(string name, decafType *type, decafFieldSize *fs) : Name(name), Type(type), FieldSize(fs) {}
+	FieldDeclAST(string name, decafType *type, decafFieldSize *fs) : Name(name), Type(type), FieldSize(fs) {
+		if (Type != NULL) { Type->setParent((decafAST *)this); }
+		if (FieldSize != NULL) { FieldSize->setParent((decafAST *)this); }
+	}
 	~FieldDeclAST() {
 		if (Type != NULL) { delete Type; }
 		if (FieldSize != NULL) { delete FieldSize; }
+	}
+	string getName() {
+		return Name;
+	}
+	decafType* getType() {
+		return Type;
 	}
 	string str() {
 		return string("FieldDecl") + "(" + Name + "," + getString(Type) + "," + getString(FieldSize) + ")";
@@ -766,12 +911,85 @@ class AssignGlobalVarAST : public decafAST {
 	decafType *Type;
 	decafExpression *Expression;
 public:
-	AssignGlobalVarAST(string name, decafType *type, decafExpression *exp) : Name(name), Type(type), Expression(exp) {}
+	AssignGlobalVarAST(string name, decafType *type, decafExpression *exp) : Name(name), Type(type), Expression(exp) {
+		if (Type != NULL) { Type->setParent((decafAST *)this); }
+		if (Expression != NULL) { Expression->setParent((decafAST *)this); }
+	}
 	~AssignGlobalVarAST() {
 		if (Type != NULL) { delete Type; }
 		if (Expression != NULL) { delete Expression; }
 	}
+	string getName() {
+		return Name;
+	}
+	decafType* getType() {
+		return Type;
+	}
 	string str() {
 		return string("AssignGlobalVar") + "(" + Name + "," + getString(Type) + "," + getString(Expression) + ")";
 	}
+};
+
+class PackageAST : public decafAST {
+	string Name;
+	decafStmtList *FieldDeclList;
+	decafStmtList *MethodDeclList;
+public:
+	PackageAST(string name, decafStmtList *fieldlist, decafStmtList *methodlist) : Name(name), FieldDeclList(fieldlist), MethodDeclList(methodlist) {
+		if (FieldDeclList != NULL) { FieldDeclList->setParent((decafAST *)this); }
+		if (MethodDeclList != NULL) { MethodDeclList->setParent((decafAST *)this); }
+
+		// Process global vars
+		for (list<decafAST*>::iterator it = FieldDeclList->begin(); it != FieldDeclList->end(); it++) {
+			decafAST *obj = *it;
+			if (FieldDeclAST *var = dynamic_cast<FieldDeclAST*>(obj)) {
+				string identifier = var->getName();
+				decafType *type = var->getType();
+				symbol *sym = new symbol();
+
+				sym->type = type->getSymType();
+				sym->regDest = 0;
+				sym->address = 0;
+				sym->spilled = false;
+
+				this->symTable.insert(pair<string,symbol*>(identifier, sym));
+			} else if (AssignGlobalVarAST *var = dynamic_cast<AssignGlobalVarAST*>(obj)) {
+				string identifier = var->getName();
+				decafType *type = var->getType();
+				symbol *sym = new symbol();
+
+				sym->type = type->getSymType();
+				sym->regDest = 0;
+				sym->address = 0;
+				sym->spilled = false;
+
+				this->symTable.insert(pair<string,symbol*>(identifier, sym));
+			}
+		}
+		//cout << "PackageAST SymTable size: " << this->symTable.size() << endl;
+	}
+	~PackageAST() { 
+		if (FieldDeclList != NULL) { delete FieldDeclList; }
+		if (MethodDeclList != NULL) { delete MethodDeclList; }
+	}
+	string str() { 
+		return string("Package") + "(" + Name + "," + getString(FieldDeclList) + "," + getString(MethodDeclList) + ")";
+	}
+};
+
+/// ProgramAST - the decaf program
+class ProgramAST : public decafAST {
+	decafStmtList *ExternList;
+	PackageAST *PackageDef;
+public:
+	ProgramAST(decafStmtList *externs, PackageAST *c) : ExternList(externs), PackageDef(c) {
+		this->parent = NULL;
+		if (ExternList != NULL) { ExternList->setParent((decafAST *)this); } 
+		if (PackageDef != NULL) { PackageDef->setParent((decafAST *)this); }
+	}
+	~ProgramAST() { 
+		if (ExternList != NULL) { delete ExternList; } 
+		if (PackageDef != NULL) { delete PackageDef; }
+	}
+	string str() { return string("Program") + "(" + getString(ExternList) + "," + getString(PackageDef) + ")"; }
 };
