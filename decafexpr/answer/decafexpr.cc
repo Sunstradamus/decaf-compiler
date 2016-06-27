@@ -33,6 +33,28 @@ class decafBlock;
 class decafBreakStmt;
 class decafContinueStmt;
 
+/* Remaining modules to implement Codegen():
+   asdf
+   decafIdList
+   decafSymbol
+   decafIfStmt
+   decafWhileStmt
+   decafForStmt
+   decafReturnStmt
+   decafBreakStmt
+   decafContinueStmt
+   MethodAST (symbols)
+   VariableExprAST
+   ArrayLocExprAST
+   decafLValue
+   AssignVarAST
+   AssignArrayLocAST
+   decafArrayType
+   decafFieldSize
+   FieldDeclAST
+   AssignGlobalVarAST
+*/
+
 /// decafAST - Base class for all abstract syntax tree nodes.
 class decafAST {
 public:
@@ -167,7 +189,7 @@ class decafType : public decafAST {
 public:
 	virtual decafType* clone() const = 0;
     virtual llvm::Type *LLVMType() = 0;
-    llvm::Value *Codegen() {return NULL;}
+    llvm::Value *Codegen() {return NULL;} // We don't use this for types
 };
 
 class decafIntType : public decafType {
@@ -226,8 +248,7 @@ public:
 		return string("StringType");
 	}
     llvm::Type *LLVMType() {
-        llvm::Type *val = NULL;
-        return val;
+        return Builder.getInt8PtrTy();
     }
 };
 
@@ -333,8 +354,14 @@ public:
 		return string("Block") + "(" + getString(VarList) + "," + getString(StmtList) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+		llvm::Value *val = NULL;
+		if (NULL != VarList) {
+			val = VarList->Codegen();
+		}
+		if (NULL != StmtList) {
+			val = StmtList->Codegen();
+		} 
+		return val;
     }
 };
 
@@ -376,8 +403,7 @@ public:
 		}
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        return Block->Codegen();
     }
 };
 
@@ -412,8 +438,54 @@ public:
 		return string("IfStmt") + "(" + getString(Condition) + "," + getString(IfBlock) + "," + getString(ElseBlock) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        llvm::Value *cond = Condition->Codegen();
+        if (cond == NULL) return NULL;
+
+        // We want to insert a new block after the current one
+        llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+        // Define the blocks
+        llvm::BasicBlock *ThenBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "then", TheFunction);
+        llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "else");
+        llvm::BasicBlock *EndIfBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "endif");
+
+        // Add the conditional branch
+        Builder.CreateCondBr(cond, ThenBB, ElseBB);
+
+        // Start adding to the 'then' block
+        Builder.SetInsertPoint(ThenBB);
+        llvm::Value *Then = IfBlock->Codegen();
+        if (Then == NULL) return NULL;
+
+        // Add the branch so we skip the else block
+        Builder.CreateBr(EndIfBB);
+        
+        // Update ThenBB
+        ThenBB = Builder.GetInsertBlock();
+
+        // Start adding to the 'else' block.
+        // If it's empty we will just jump to the end of the if statement
+        TheFunction->getBasicBlockList().push_back(ElseBB);
+        Builder.SetInsertPoint(ElseBB);
+        llvm::Value *Else = ElseBlock->Codegen();
+        if (Else == NULL) return NULL;
+
+        // Branch to the end of the if statement
+        Builder.CreateBr(EndIfBB);
+        
+        // Update ElseBB
+        ElseBB = Builder.GetInsertBlock();
+
+        // Setup the next code block
+        TheFunction->getBasicBlockList().push_back(EndIfBB);
+        Builder.SetInsertPoint(EndIfBB);
+
+        // Handle the case of a return value from either code block
+        llvm::PHINode *PN = Builder.CreatePHI(Then->getType(), 2, "iftmp");
+        PN->addIncoming(Then, ThenBB);
+        PN->addIncoming(Else, ElseBB);
+        
+        return PN;
     }
 };
 
@@ -876,8 +948,12 @@ public:
 		return string("UnaryExpr") + "(" + getString(Operator) + "," + getString(Expression) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        llvm::Value *Expr = Expression->Codegen();
+        if (Expr == 0) return 0;
+
+        if (Operator->str().compare("UnaryMinus") == 0)  return Builder.CreateNeg(Expr, "negtmp");
+        if (Operator->str().compare("Not") == 0)  return Builder.CreateNot(Expr, "nottmp");
+        return NULL;
     }
 };
 
@@ -947,8 +1023,61 @@ public:
 		return string("StringConstant") + "(" + Value + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        string v = string("");
+        // Ignore the quotes in the string
+        for (int i = 1; i < Value.length()-1; i++) {
+            // Convert escape characters
+            if (Value.at(i) == '\\') {
+                switch (Value.at(i+1)) {
+                    case 'a':
+                        v.append(1u, '\a');
+                        i++;
+                        break;
+                    case 'b':
+                        v.append(1u, '\b');
+                        i++;
+                        break;
+                    case 't':
+                        v.append(1u, '\t');
+                        i++;
+                        break;
+                    case 'n':
+                        v.append(1u, '\n');
+                        i++;
+                        break;
+                    case 'v':
+                        v.append(1u, '\v');
+                        i++;
+                        break;
+                    case 'f':
+                        v.append(1u, '\f');
+                        i++;
+                        break;
+                    case 'r':
+                        v.append(1u, '\r');
+                        i++;
+                        break;
+                    case '\\':
+                        v.append(1u, '\\');
+                        i++;
+                        break;
+                    case '\'':
+                        v.append(1u, '\'');
+                        i++;
+                        break;
+                    case '\"':
+                        v.append(1u, '\"');
+                        i++;
+                    default:
+                        break;
+                }
+            }
+            else {
+                v.append(1u, Value.at(i));
+            }
+        }
+        //llvm::Value *val = llvm::ConstantDataArray::getString(TheModule->getContext(), v.c_str(), true);
+        return Builder.CreateGlobalStringPtr(v.c_str(), "cstrtmp");
     }
 };
 
