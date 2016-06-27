@@ -298,6 +298,7 @@ public:
 			}
 		}
 		//cout << "Method_Decl SymTable size: " << this->symTable.size() << endl;
+		return true;
 	}
 	string str() {
 		return string("MethodBlock") + "(" + getString(VarList) + "," + getString(StmtList) + ")";
@@ -492,7 +493,9 @@ public:
 		if (SymbolList != NULL) { SymbolList->setParent((decafAST *)this); }
 		if (MethodBlock != NULL) { MethodBlock->setParent((decafAST *)this); }
 
-		MethodBlock->addMethodParamSymbols(SymbolList);
+		if (MethodBlock->addMethodParamSymbols(SymbolList) == false) {
+			// Failed to insert into table, throw a syntax error here.
+		}
 	}
 	~MethodAST() {
 		if (ReturnType != NULL) { delete ReturnType; }
