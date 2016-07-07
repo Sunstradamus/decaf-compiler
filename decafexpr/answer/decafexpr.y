@@ -477,7 +477,7 @@ op_else: T_ELSE decafblock
 }
        | /* empty string */
 {
-  $$ = new decafOptBlock(NULL);
+  $$ = NULL;
 }
        ;
 

@@ -1,0 +1,30 @@
+extern func print_int(int) void;
+extern func print_string(string) void;
+
+package whileloop {
+
+    func main() int {
+        var input, sum, count int;
+        sum = 0;
+        count = 0;
+        
+        while (true) {
+            input = count;
+            count = count + 1;
+            if (input == 7) {
+                break;
+            }
+            else {
+                if (input == 6) {
+                    continue;
+                }
+            }
+            sum = sum + input;
+        }
+        print_string("The sum of the numbers is: ");
+        print_int(sum);
+        print_string("\nThe average of the numbers is: ");
+        print_int(sum/count);
+        print_string("\n");
+    }
+}

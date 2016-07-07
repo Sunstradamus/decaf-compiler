@@ -1,0 +1,26 @@
+extern func print_int(int) void;
+extern func print_string(string) void;
+extern func read_int() int;
+
+package GreatestCommonDivisor {
+
+    func main() int {
+        var x, y int;
+        // print_string("What number do you want to print? ");
+        // x = read_int();
+        // print_string("How many times do you want it printed? ");
+        // y = read_int();
+        x = 123;
+        y = 5;
+        print_multiple(x, y);
+    }
+
+    // function that prints 'word' on 'lines' number of lines
+    func print_multiple(word int, lines int) int {
+        var i int;
+        for(i=0; i < lines; i=i+1) {
+            print_int(word);
+            print_string("\n");
+        }
+    }
+}

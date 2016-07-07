@@ -39,13 +39,7 @@ class AssignGlobalVarAST;
 typedef map<string, llvm::Value*> symbol_table;
 
 /* Remaining modules to implement Codegen():
-   decafIdList
-   decafWhileStmt
-   decafForStmt
-   decafBreakStmt
-   decafContinueStmt
    ArrayLocExprAST
-   decafLValue
    AssignArrayLocAST
    decafArrayType
    decafFieldSize
@@ -59,11 +53,18 @@ protected:
 	decafAST *parent;
 	symbol_table symTable;
     bool isblock = false;
+    bool isloop = false;
 public:
     virtual ~decafAST() {}
     virtual string str() { return string(""); }
     void setParent(decafAST *node) {
         this->parent = node;
+    }
+    decafAST *find_loop() {
+        if (isloop) {
+            return this;
+        }
+        return this->parent->find_loop();
     }
     void insert_symtbl(string ident, llvm::Value *alloca) {
         if (isblock) {
@@ -454,8 +455,10 @@ class decafIfStmt : public decafStatement {
 	decafExpression *Condition;
 	BlockAST *IfBlock;
 	decafOptBlock *ElseBlock;
+    bool hasElse;
 public:
 	decafIfStmt(decafExpression *cond, BlockAST *ifblock, decafOptBlock *elseblock) : Condition(cond), IfBlock(ifblock), ElseBlock(elseblock) {
+        //hasElse = 
 		if (Condition != NULL) { Condition->setParent((decafAST *)this); }
 		if (IfBlock != NULL) { IfBlock->setParent((decafAST *)this); }
 		if (ElseBlock != NULL) { ElseBlock->setParent((decafAST *)this); }
@@ -477,16 +480,18 @@ public:
 
         // Define the blocks
         llvm::BasicBlock *ThenBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "then", TheFunction);
-        llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "else");
+        llvm::BasicBlock *ElseBB;
+        if (ElseBlock != NULL) {
+            ElseBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "else");
+        }
         llvm::BasicBlock *EndIfBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "endif");
 
         // Add the conditional branch
-        Builder.CreateCondBr(cond, ThenBB, ElseBB);
+        Builder.CreateCondBr(cond, ThenBB, (ElseBlock != NULL ? ElseBB : EndIfBB) );
 
         // Start adding to the 'then' block
         Builder.SetInsertPoint(ThenBB);
-        llvm::Value *Then = IfBlock->Codegen();
-        if (Then == NULL) return NULL;
+        IfBlock->Codegen();
 
         // Add the branch so we skip the else block
         Builder.CreateBr(EndIfBB);
@@ -496,35 +501,40 @@ public:
 
         // Start adding to the 'else' block.
         // If it's empty we will just jump to the end of the if statement
-        TheFunction->getBasicBlockList().push_back(ElseBB);
-        Builder.SetInsertPoint(ElseBB);
-        llvm::Value *Else = ElseBlock->Codegen();
-        if (Else == NULL) return NULL;
+        if (ElseBlock != NULL) {
+            TheFunction->getBasicBlockList().push_back(ElseBB);
+            Builder.SetInsertPoint(ElseBB);
+            ElseBlock->Codegen();
 
-        // Branch to the end of the if statement
-        Builder.CreateBr(EndIfBB);
+            // Branch to the end of the if statement
+            Builder.CreateBr(EndIfBB);
         
-        // Update ElseBB
-        ElseBB = Builder.GetInsertBlock();
+            // Update ElseBB
+            ElseBB = Builder.GetInsertBlock();
+        }
 
         // Setup the next code block
         TheFunction->getBasicBlockList().push_back(EndIfBB);
         Builder.SetInsertPoint(EndIfBB);
 
-        // Handle the case of a return value from either code block
-        llvm::PHINode *PN = Builder.CreatePHI(Then->getType(), 2, "iftmp");
-        PN->addIncoming(Then, ThenBB);
-        PN->addIncoming(Else, ElseBB);
-        
-        return PN;
+        return EndIfBB;
     }
 };
 
-class decafWhileStmt : public decafStatement {
+class decafLoop : public decafStatement {
+protected:
+    llvm::BasicBlock *Start, *End;
+public:
+    virtual llvm::BasicBlock *getStart() { return Start; }
+    virtual llvm::BasicBlock *getEnd() { return End; }
+};
+
+class decafWhileStmt : public decafLoop {
 	decafExpression *Condition;
 	BlockAST *WhileBlock;
 public:
 	decafWhileStmt(decafExpression *cond, BlockAST *blk) : Condition(cond), WhileBlock(blk) {
+        isloop = true;
 		if (Condition != NULL) { Condition->setParent((decafAST *)this); }
 		if (WhileBlock != NULL) { WhileBlock->setParent((decafAST *)this); }
 	}
@@ -536,18 +546,52 @@ public:
 		return string("WhileStmt") + "(" + getString(Condition) + "," + getString(WhileBlock) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        // We want to insert a new block after the current one
+        llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+        // Define the blocks
+        llvm::BasicBlock *WhileCondBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "whilecond", TheFunction);
+        llvm::BasicBlock *WhileBodyBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "whilebody");
+        llvm::BasicBlock *EndWhileBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "endwhile");
+
+        // Used for break and continue statements
+        Start = WhileCondBB;
+        End = EndWhileBB;
+
+        // Create the condition block
+        Builder.CreateBr(WhileCondBB);
+        Builder.SetInsertPoint(WhileCondBB);
+        llvm::Value *cond = Condition->Codegen();
+        if (cond == NULL) return NULL;
+        Builder.CreateCondBr(cond, WhileBodyBB, EndWhileBB);
+        // Update WhileCondBB
+        WhileCondBB = Builder.GetInsertBlock();
+        
+        // Add the body of the while loop and a jump to the beginning
+        TheFunction->getBasicBlockList().push_back(WhileBodyBB);
+        Builder.SetInsertPoint(WhileBodyBB);
+        WhileBlock->Codegen();
+        Builder.CreateBr(WhileCondBB);
+        
+        // Update WhileBB
+        WhileBodyBB = Builder.GetInsertBlock();
+
+        // Setup the next code block
+        TheFunction->getBasicBlockList().push_back(EndWhileBB);
+        Builder.SetInsertPoint(EndWhileBB);
+
+        return EndWhileBB;
     }
 };
 
-class decafForStmt : public decafStatement {
+class decafForStmt : public decafLoop {
 	decafStmtList *PreAssign;
 	decafExpression *Condition;
 	decafStmtList *LoopAssign;
 	BlockAST *ForBlock;
 public:
 	decafForStmt(decafStmtList *pa, decafExpression *cond, decafStmtList *la, BlockAST *fb) : PreAssign(pa), Condition(cond), LoopAssign(la), ForBlock(fb) {
+        isloop = true;
 		if (PreAssign != NULL) { PreAssign->setParent((decafAST *)this); }
 		if (Condition != NULL) { Condition->setParent((decafAST *)this); }
 		if (LoopAssign != NULL) { LoopAssign->setParent((decafAST *)this); }
@@ -563,8 +607,48 @@ public:
 		return string("ForStmt") + "(" + getString(PreAssign) + "," + getString(Condition) + "," + getString(LoopAssign) + "," + getString(ForBlock) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+
+        // We want to insert a new block after the current one
+        llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+        // Define the blocks
+        llvm::BasicBlock *ForCondBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "forcond", TheFunction);
+        llvm::BasicBlock *ForBodyBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "forbody");
+        llvm::BasicBlock *EndForBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "endfor");
+
+        // Used for break and continue statements
+        Start = ForCondBB;
+        End = EndForBB;
+
+        // Execute the pre-assign code first
+        PreAssign->Codegen();
+
+        // Create the condition block
+        Builder.CreateBr(ForCondBB);
+        Builder.SetInsertPoint(ForCondBB);
+        llvm::Value *cond = Condition->Codegen();
+        if (cond == NULL) return NULL;
+        Builder.CreateCondBr(cond, ForBodyBB, EndForBB);
+        // Update ForCondBB
+        ForCondBB = Builder.GetInsertBlock();
+        
+        // Add the body of the for loop
+        TheFunction->getBasicBlockList().push_back(ForBodyBB);
+        Builder.SetInsertPoint(ForBodyBB);
+        ForBlock->Codegen();
+        
+        // Update the loop assignment and jump to the beginning
+        LoopAssign->Codegen();
+        Builder.CreateBr(ForCondBB);
+        
+        // Update ForBB
+        ForBodyBB = Builder.GetInsertBlock();
+
+        // Setup the next code block
+        TheFunction->getBasicBlockList().push_back(EndForBB);
+        Builder.SetInsertPoint(EndForBB);
+
+        return EndForBB;
     }
 };
 
@@ -594,7 +678,10 @@ public:
 		return string("BreakStmt");
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
+        decafAST *p = this->parent->find_loop();
+        assert( p != NULL && "Error: break statement outside of a loop");
+        assert(dynamic_cast<decafLoop *>(p) != NULL);
+        llvm::Value *val = Builder.CreateBr(dynamic_cast<decafLoop *>(p)->getEnd());
         return val;
     }
 };
@@ -607,7 +694,10 @@ public:
 		return string("ContinueStmt");
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
+        decafAST *p = this->parent->find_loop();
+        assert( p != NULL && "Error: continue statement outside of a loop");
+        assert(dynamic_cast<decafLoop *>(p) != NULL);
+        llvm::Value *val = Builder.CreateBr(dynamic_cast<decafLoop *>(p)->getStart());
         return val;
     }
 };
@@ -1013,7 +1103,7 @@ public:
         if (llvm::isa<llvm::Argument>(alloca)) return alloca;
         assert(alloca != NULL);
         //cerr << "Found " << Name << "." << endl;
-        return Builder.CreateLoad(alloca);
+        return Builder.CreateLoad(alloca, "ld_" + Name);
     }
 };
 

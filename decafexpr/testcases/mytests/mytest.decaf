@@ -1,0 +1,32 @@
+extern func print_int(int) void;
+
+package test {
+
+     func main() int {
+          var x int;
+          x = 3;
+          print_int(test(x+3));
+          print_int(test(x+2));
+          print_int(test(x));
+          print_int(test(x-2));
+     }
+
+     func test(y int) int {
+          if (y > 4) {
+             if (y > 5) {
+                return (1);
+             }
+             else {
+                return (2);
+             }
+          }
+          else {
+             if (y > 2) {
+                return (3);
+             }
+             else {
+                return (4);
+             }
+          }
+     }
+}
