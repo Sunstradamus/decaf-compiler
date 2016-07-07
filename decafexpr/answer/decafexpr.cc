@@ -1183,9 +1183,63 @@ public:
 	}
     llvm::Value *Codegen() {
         llvm::Value *L = Left->Codegen();
-        llvm::Value *R = Right->Codegen();
-        if (L == 0 || R == 0) return 0;
+        if (L == 0 ) return 0;
 
+        if (Op->str().compare("And") == 0) {
+            // We want to insert a new block after the current one
+            llvm::BasicBlock *StartingBB = Builder.GetInsertBlock();
+            llvm::Function *TheFunction = StartingBB->getParent();
+
+            // Define the blocks
+            llvm::BasicBlock *RightBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "and_right", TheFunction);
+            llvm::BasicBlock *EndBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "and_end");
+            // add a jump if false
+            Builder.CreateCondBr(L, RightBB, EndBB);
+            // Start adding to the 'right' block
+            Builder.SetInsertPoint(RightBB);
+            llvm::Value *R = Right->Codegen();
+            llvm::Value *andV = Builder.CreateAnd(L, R, "andtmp");
+            Builder.CreateBr(EndBB);
+            // Update RightBB
+            RightBB = Builder.GetInsertBlock();
+            // Add the end of the and statement
+            TheFunction->getBasicBlockList().push_back(EndBB);
+            Builder.SetInsertPoint(EndBB);
+            // Phi node makes sure the correct boolean value is returned
+            llvm::PHINode *PN = Builder.CreatePHI(Builder.getInt1Ty(), 2, "andphi");
+            PN->addIncoming(L, StartingBB);
+            PN->addIncoming(andV, RightBB);
+            return PN;
+        }
+        else if (Op->str().compare("Or") == 0) {
+            // We want to insert a new block after the current one
+            llvm::BasicBlock *StartingBB = Builder.GetInsertBlock();
+            llvm::Function *TheFunction = StartingBB->getParent();
+
+            // Define the blocks
+            llvm::BasicBlock *RightBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "or_right", TheFunction);
+            llvm::BasicBlock *EndBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "or_end");
+            // add a jump if true
+            Builder.CreateCondBr(L, EndBB, RightBB);
+            // Start adding to the 'right' block
+            Builder.SetInsertPoint(RightBB);
+            llvm::Value *R = Right->Codegen();
+            llvm::Value *orV = Builder.CreateOr(L, R, "ortmp");
+            Builder.CreateBr(EndBB);
+            // Update RightBB
+            RightBB = Builder.GetInsertBlock();
+            // Add the end of the or statement
+            TheFunction->getBasicBlockList().push_back(EndBB);
+            Builder.SetInsertPoint(EndBB);
+            // Phi node makes sure the correct boolean value is returned
+            llvm::PHINode *PN = Builder.CreatePHI(Builder.getInt1Ty(), 2, "orphi");
+            PN->addIncoming(L, StartingBB);
+            PN->addIncoming(orV, RightBB);
+            return PN;
+        }
+        llvm::Value *R = Right->Codegen();
+        if (R == 0) return 0;
+        
         if (Op->str().compare("Plus") == 0)  return Builder.CreateAdd(L, R, "addtmp");
         if (Op->str().compare("Minus") == 0)  return Builder.CreateSub(L, R, "subtmp");
         if (Op->str().compare("Mult") == 0)  return Builder.CreateMul(L, R, "multmp");
@@ -1193,8 +1247,6 @@ public:
         if (Op->str().compare("Mod") == 0)  return Builder.CreateSRem(L, R, "modtmp");
         if (Op->str().compare("Rightshift") == 0) return Builder.CreateAShr(L, R, "rshtmp");
         if (Op->str().compare("Leftshift") == 0) return Builder.CreateShl(L, R, "lshtmp");
-        if (Op->str().compare("And") == 0) return Builder.CreateAnd(L, R, "andtmp");
-        if (Op->str().compare("Or") == 0) return Builder.CreateOr(L, R, "ortmp");
         if (Op->str().compare("Lt") == 0)  return Builder.CreateICmpSLT(L, R, "lttmp");
         if (Op->str().compare("Gt") == 0)  return Builder.CreateICmpSGT(L, R, "gttmp");
         if (Op->str().compare("Leq") == 0) return Builder.CreateICmpSLE(L, R, "letmp");

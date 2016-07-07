@@ -1,0 +1,25 @@
+extern func print_int(int) void;
+
+package shortcircuit {
+
+    func main() int {
+        var t, f bool;
+        var x, y int;
+        t = true;
+        f = false;
+        x = 5;
+        y = 0;
+        if (t || x/y == 0) {
+            print_int(0);
+        }
+        if (f || f && x/y == 0) {
+            print_int(0);
+        }
+        else {
+            print_int(1);
+        }
+        if (((t || x/y == 0) && f && x/y == 0) || (t && (t || x/y == 0))) {
+            print_int(2);
+        }
+    }
+}
