@@ -4,10 +4,13 @@ extern func read_int() int;
 
 package GreatestCommonDivisor {
 
+    var a int = 396669;
+    var b int = 44772;
+    
     func main() int {
         var x, y, z int;
-        x = 396669;
-        y = 44772;
+        x = a;
+        y = b;
         // print_string("What is the first number? ");
         // x = read_int();
         // print_string("What is the second number? ");

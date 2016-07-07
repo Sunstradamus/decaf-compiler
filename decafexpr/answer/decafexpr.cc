@@ -38,14 +38,14 @@ class AssignGlobalVarAST;
 
 typedef map<string, llvm::Value*> symbol_table;
 
-/* Remaining modules to implement Codegen():
-   ArrayLocExprAST
-   AssignArrayLocAST
-   decafArrayType
-   decafFieldSize
-   FieldDeclAST
-   AssignGlobalVarAST
-*/
+struct array_info {
+    llvm::ArrayType *arraytype;
+    llvm::Type *elementtype;
+};
+typedef map<string, array_info> arrayinfo_table;
+
+arrayinfo_table arraytbl;
+
 
 /// decafAST - Base class for all abstract syntax tree nodes.
 class decafAST {
@@ -68,11 +68,11 @@ public:
     }
     void insert_symtbl(string ident, llvm::Value *alloca) {
         if (isblock) {
-            //cerr << "inserted " << ident << " into symbol table." << endl;
+            // cerr << "inserted " << ident << " into symbol table." << endl;
             symTable.insert(pair<string,llvm::Value*>(ident,alloca));
         }
         else {
-            //cerr << "Can't store " << ident << ". Looking in parent..." << endl;
+            // cerr << "Can't store " << ident << ". Looking in parent..." << endl;
             parent->insert_symtbl(ident, alloca);
         }
     }
@@ -82,10 +82,10 @@ public:
             return it->second;
         } else {
             if (parent == NULL) {
-                //cerr << "Not found at all." << endl;
+                // cerr << "Not found at all." << endl;
                 return NULL;
             } else {
-                //cerr << "Not found in me. Looking in parent..." << endl;
+                // cerr << "Not found in me. Looking in parent..." << endl;
                 return parent->access_symtbl(ident);
             }
         }
@@ -1121,7 +1121,19 @@ public:
 		return string("ArrayLocExpr") + "(" + Name + "," + getString(Index) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
+        // Get the memory location
+        llvm::Value *alloca = access_symtbl(Name);
+        assert(alloca);
+        // Get the additional information
+        map<string, array_info>::iterator it = arraytbl.find(Name);
+        array_info info;
+        assert(it != arraytbl.end());
+        info = it->second;
+        // Look up the value at the given index
+        llvm::Value *ArrayLoc = Builder.CreateStructGEP(info.arraytype, alloca, 0, "arrayloc");
+        llvm::Value *Ind = Index->Codegen();
+        llvm::Value *ArrayIndex = Builder.CreateGEP(info.elementtype, ArrayLoc, Ind, "arrayindex");
+        llvm::Value *val = Builder.CreateLoad(ArrayIndex, "ld_" + Name);
         return val;
     }
 };
@@ -1352,7 +1364,19 @@ public:
 		return string("AssignArrayLoc") + "(" + Name + "," + getString(Index) + "," + getString(Expression) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
+        // Get the memory location
+        llvm::Value *alloca = access_symtbl(Name);
+        assert(alloca);
+        // Get the additional information
+        map<string, array_info>::iterator it = arraytbl.find(Name);
+        array_info info;
+        assert(it != arraytbl.end());
+        info = it->second;
+        // Store the value at the given index
+        llvm::Value *ArrayLoc = Builder.CreateStructGEP(info.arraytype, alloca, 0, "arrayloc");
+        llvm::Value *Ind = Index->Codegen();
+        llvm::Value *ArrayIndex = Builder.CreateGEP(info.elementtype, ArrayLoc, Ind, "arrayindex");
+        llvm::Value *val = Builder.CreateStore(Expression->Codegen(), ArrayIndex);
         return val;
     }
 };
@@ -1382,6 +1406,8 @@ public:
 		array = true;
 	}
 	~decafFieldSize() {}
+    bool isArray() { return array; }
+    int getSize() { return stoi(ArraySize); }
 	string str() {
 		if (array) {
 			return string("Array") + "(" + ArraySize + ")";
@@ -1412,8 +1438,30 @@ public:
 		return string("FieldDecl") + "(" + Name + "," + getString(Type) + "," + getString(FieldSize) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        if (FieldSize->isArray()) {
+            // set the array size and type
+            llvm::ArrayType *atype = llvm::ArrayType::get(Type->LLVMType(), FieldSize->getSize());
+            // initialize all the values of the array to zero
+            llvm::Constant *zeroInit = llvm::Constant::getNullValue(atype);
+            // declare the array as a global variable
+            llvm::GlobalVariable *GV = new llvm::GlobalVariable(*TheModule, atype, false, llvm::GlobalValue::ExternalLinkage, zeroInit, Name);
+            assert(dynamic_cast<llvm::Value *>(GV));
+            insert_symtbl(Name,dynamic_cast<llvm::Value *>(GV));
+            // Add info about the array to the global array info table
+            array_info info;
+            info.arraytype = atype;
+            info.elementtype = Type->LLVMType();
+            arraytbl.insert(pair<string, array_info>(Name, info));
+            return GV;
+        }
+        else {
+            llvm::Constant *zeroInit = llvm::Constant::getNullValue(Type->LLVMType());
+            llvm::GlobalVariable *GV = new llvm::GlobalVariable(*TheModule, Type->LLVMType(), false, llvm::GlobalValue::ExternalLinkage, zeroInit, Name);
+            assert(dynamic_cast<llvm::Value *>(GV));
+            insert_symtbl(Name,dynamic_cast<llvm::Value *>(GV));
+            return GV;
+            
+        }
     }
 };
 
@@ -1434,8 +1482,14 @@ public:
 		return string("AssignGlobalVar") + "(" + Name + "," + getString(Type) + "," + getString(Expression) + ")";
 	}
     llvm::Value *Codegen() {
-        llvm::Value *val = NULL;
-        return val;
+        // Assume that the expression is a constant
+        llvm::Constant *expr = dynamic_cast<llvm::Constant *>(Expression->Codegen());
+        assert(expr);
+        llvm::GlobalVariable *GV = new llvm::GlobalVariable(*TheModule, Type->LLVMType(), false, llvm::GlobalValue::ExternalLinkage, expr, Name);
+        llvm:: Value *alloca = dynamic_cast<llvm::Value *>(GV);
+        assert(alloca);
+        insert_symtbl(Name, alloca);
+        return GV;
     }
 };
 
