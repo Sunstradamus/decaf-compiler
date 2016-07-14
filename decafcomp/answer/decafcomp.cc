@@ -307,6 +307,7 @@ public:
 		//cerr << "Creating variable " << Name << "..." << endl;
 		llvm::Value *alloca = Builder.CreateAlloca(Type->LLVMType(), 0, Name.c_str());
 		assert(alloca != NULL);
+        Builder.CreateStore(llvm::Constant::getNullValue(Type->LLVMType()), alloca);
 		//cerr << "Creation of " << Name << " complete" << endl;
 		insert_symtbl(Name,alloca);
 		return NULL;
