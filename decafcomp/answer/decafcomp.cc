@@ -842,8 +842,10 @@ public:
 		decafAST *node = this->find_nearest_method();
 		MethodAST *meth = dynamic_cast<MethodAST*>(node);
 		decafType *type = meth->getType();
-		// TODO: Fix this inefficient type checking (3 objects not GC'd)
+		// If the method is void and there is an expr val, throw error
 		assert(type->LLVMType()->isVoidTy() && Value != NULL);
+		// If method is NOT void and there isn't an expr val, throw error
+		assert(!type->LLVMType()->isVoidTy() && Value = NULL);
 
 		llvm::Value *val = Value->Codegen();
 		assert(val->getType()->getTypeID() == type->LLVMType()->getTypeID());
