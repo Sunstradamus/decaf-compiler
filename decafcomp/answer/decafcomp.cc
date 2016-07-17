@@ -54,6 +54,7 @@ protected:
 	symbol_table symTable;
 	bool isblock = false;
 	bool isloop = false;
+	bool isMethod = false;
 public:
 	virtual ~decafAST() {}
 	virtual string str() { return string(""); }
@@ -65,6 +66,13 @@ public:
 			return this;
 		}
 		return this->parent->find_loop();
+	}
+	decafAST* find_nearest_method() {
+		decafAST *node = this->parent;
+		while (!node->isMethod) {
+			node = node->parent;
+		}
+		return node;
 	}
 	void insert_symtbl(string ident, llvm::Value *alloca) {
 		if (isblock) {
@@ -653,24 +661,6 @@ public:
 	}
 };
 
-class decafReturnStmt : public decafStatement {
-	decafExpression *Value;
-public:
-	decafReturnStmt(decafExpression *val) : Value(val) {
-		if (Value != NULL) { Value->setParent((decafAST *)this); }
-	}
-	~decafReturnStmt() {
-		if (Value != NULL) { delete Value; }
-	}
-	string str() {
-		return string ("ReturnStmt") + "(" + getString(Value) + ")";
-	}
-	llvm::Value *Codegen() {
-		llvm::Value *val = Value->Codegen();
-		return Builder.CreateRet(val);
-	}
-};
-
 class decafBreakStmt : public decafStatement {
 public:
 	decafBreakStmt() {}
@@ -711,6 +701,7 @@ class MethodAST : public decafAST {
 	llvm::Function *TheFunction;
 public:
 	MethodAST(string name, decafType *rt, decafStmtList *sl, MethodBlockAST *mb) : Name(name), ReturnType(rt), SymbolList(sl), MethodBlock(mb) {
+		this->isMethod = true;
 		if (ReturnType != NULL) { ReturnType->setParent((decafAST *)this); }
 		if (MethodBlock != NULL) { MethodBlock->setParent((decafAST *)this); }
 		if (SymbolList != NULL) {
@@ -726,6 +717,9 @@ public:
 	}
 	string str() {
 		return string("Method") + "(" + Name + "," + getString(ReturnType) + "," + getString(SymbolList) + "," + getString(MethodBlock) + ")";
+	}
+	decafType* getType() {
+		return ReturnType;
 	}
 	void CreateMethodHeader() {
 		// Define the number and type of parameters
@@ -829,6 +823,31 @@ public:
 			return Builder.CreateCall(method, args);
 		}
 		return Builder.CreateCall(method, args, "calltmp");
+	}
+};
+
+class decafReturnStmt : public decafStatement {
+	decafExpression *Value;
+public:
+	decafReturnStmt(decafExpression *val) : Value(val) {
+		if (Value != NULL) { Value->setParent((decafAST *)this); }
+	}
+	~decafReturnStmt() {
+		if (Value != NULL) { delete Value; }
+	}
+	string str() {
+		return string ("ReturnStmt") + "(" + getString(Value) + ")";
+	}
+	llvm::Value *Codegen() {
+		decafAST *node = this->find_nearest_method();
+		MethodAST *meth = dynamic_cast<MethodAST*>(node);
+		decafType *type = meth->getType();
+		// TODO: Fix this inefficient type checking (3 objects not GC'd)
+		assert(type->LLVMType()->isVoidTy() && Value != NULL);
+
+		llvm::Value *val = Value->Codegen();
+		assert(val->getType()->getTypeID() == type->LLVMType()->getTypeID());
+		return Builder.CreateRet(val);
 	}
 };
 
