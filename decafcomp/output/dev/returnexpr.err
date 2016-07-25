@@ -1,0 +1,9 @@
+output prefix: llvm/dev/returnexpr
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... failed (-6)
+Assertion failed: (dynamic_cast<decafEmptyExpression*>(Value) != NULL), function Codegen, file ./decafcomp.cc, line 849.
+codegen failed

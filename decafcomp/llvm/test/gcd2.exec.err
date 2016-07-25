@@ -1,0 +1,1 @@
+clang: error: no such file or directory: 'llvm/test/gcd2.llvm.s'

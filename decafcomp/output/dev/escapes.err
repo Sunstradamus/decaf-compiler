@@ -1,0 +1,22 @@
+output prefix: llvm/dev/escapes
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Print'
+
+@cstrtmp = private unnamed_addr constant [9 x i8] c"\09\0B\0D\0A\07\0C\08\5C\00"
+
+declare void @print_string(i8*)
+
+define void @main() {
+entry:
+  call void @print_string(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @cstrtmp, i32 0, i32 0))
+  ret void
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/escapes.llvm" -o "llvm/dev/escapes.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/escapes.llvm.bc" -o "llvm/dev/escapes.llvm.s" ... ok
+linking:gcc -o "llvm/dev/escapes.llvm.exec" "llvm/dev/escapes.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/escapes.llvm.exec ... failed (128)

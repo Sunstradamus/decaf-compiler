@@ -1,0 +1,73 @@
+; ModuleID = 'Catalan'
+
+declare void @print_int(i32)
+
+declare i32 @read_int()
+
+define void @main() {
+entry:
+  %calltmp = call i32 @read_int()
+  %calltmp1 = call i32 @cat(i32 %calltmp)
+  call void @print_int(i32 %calltmp1)
+  ret void
+}
+
+define i32 @fact(i32) {
+entry:
+  %n = alloca i32
+  store i32 %0, i32* %n
+  %ld_n = load i32, i32* %n
+  %eqtmp = icmp eq i32 %ld_n, 1
+  br i1 %eqtmp, label %then, label %else
+
+then:                                             ; preds = %entry
+  ret i32 1
+  br label %endif
+
+else:                                             ; preds = %entry
+  %ld_n1 = load i32, i32* %n
+  %ld_n2 = load i32, i32* %n
+  %subtmp = sub i32 %ld_n2, 1
+  %calltmp = call i32 @fact(i32 %subtmp)
+  %multmp = mul i32 %ld_n1, %calltmp
+  ret i32 %multmp
+  br label %endif
+
+endif:                                            ; preds = %else, %then
+  ret i32 0
+}
+
+define i32 @choose(i32, i32) {
+entry:
+  %a = alloca i32
+  store i32 %0, i32* %a
+  %b = alloca i32
+  store i32 %1, i32* %b
+  %ld_a = load i32, i32* %a
+  %calltmp = call i32 @fact(i32 %ld_a)
+  %ld_b = load i32, i32* %b
+  %calltmp1 = call i32 @fact(i32 %ld_b)
+  %ld_a2 = load i32, i32* %a
+  %ld_b3 = load i32, i32* %b
+  %subtmp = sub i32 %ld_a2, %ld_b3
+  %calltmp4 = call i32 @fact(i32 %subtmp)
+  %multmp = mul i32 %calltmp1, %calltmp4
+  %divtmp = sdiv i32 %calltmp, %multmp
+  ret i32 %divtmp
+  ret i32 0
+}
+
+define i32 @cat(i32) {
+entry:
+  %n = alloca i32
+  store i32 %0, i32* %n
+  %ld_n = load i32, i32* %n
+  %multmp = mul i32 2, %ld_n
+  %ld_n1 = load i32, i32* %n
+  %calltmp = call i32 @choose(i32 %multmp, i32 %ld_n1)
+  %ld_n2 = load i32, i32* %n
+  %addtmp = add i32 %ld_n2, 1
+  %divtmp = sdiv i32 %calltmp, %addtmp
+  ret i32 %divtmp
+  ret i32 0
+}

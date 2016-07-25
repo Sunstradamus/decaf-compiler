@@ -1,0 +1,28 @@
+output prefix: llvm/dev/charescapevals
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  call void @print_int(i32 9)
+  call void @print_int(i32 11)
+  call void @print_int(i32 13)
+  call void @print_int(i32 10)
+  call void @print_int(i32 7)
+  call void @print_int(i32 12)
+  call void @print_int(i32 8)
+  call void @print_int(i32 92)
+  call void @print_int(i32 39)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/charescapevals.llvm" -o "llvm/dev/charescapevals.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/charescapevals.llvm.bc" -o "llvm/dev/charescapevals.llvm.s" ... ok
+linking:gcc -o "llvm/dev/charescapevals.llvm.exec" "llvm/dev/charescapevals.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/charescapevals.llvm.exec ... ok

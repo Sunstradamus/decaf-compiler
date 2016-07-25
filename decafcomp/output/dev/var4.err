@@ -1,0 +1,50 @@
+output prefix: llvm/dev/var4
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %p = alloca i32
+  store i32 0, i32* %p
+  %q = alloca i32
+  store i32 0, i32* %q
+  %r = alloca i32
+  store i32 0, i32* %r
+  %s = alloca i32
+  store i32 0, i32* %s
+  %ld_p = load i32, i32* %p
+  call void @print_int(i32 %ld_p)
+  %ld_q = load i32, i32* %q
+  call void @print_int(i32 %ld_q)
+  %ld_r = load i32, i32* %r
+  call void @print_int(i32 %ld_r)
+  %ld_s = load i32, i32* %s
+  call void @print_int(i32 %ld_s)
+  store i32 1, i32* %p
+  %ld_p1 = load i32, i32* %p
+  store i32 %ld_p1, i32* %q
+  %ld_q2 = load i32, i32* %q
+  store i32 %ld_q2, i32* %r
+  %ld_r3 = load i32, i32* %r
+  store i32 %ld_r3, i32* %s
+  %ld_p4 = load i32, i32* %p
+  call void @print_int(i32 %ld_p4)
+  %ld_q5 = load i32, i32* %q
+  call void @print_int(i32 %ld_q5)
+  %ld_r6 = load i32, i32* %r
+  call void @print_int(i32 %ld_r6)
+  %ld_s7 = load i32, i32* %s
+  call void @print_int(i32 %ld_s7)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/var4.llvm" -o "llvm/dev/var4.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/var4.llvm.bc" -o "llvm/dev/var4.llvm.s" ... ok
+linking:gcc -o "llvm/dev/var4.llvm.exec" "llvm/dev/var4.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/var4.llvm.exec ... ok

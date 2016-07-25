@@ -1,0 +1,3 @@
+Error: newline in string constant
+11: syntax error at char 21
+; ModuleID = 'Test'

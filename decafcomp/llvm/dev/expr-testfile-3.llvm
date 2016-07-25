@@ -1,0 +1,14 @@
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %y = alloca i1
+  store i1 false, i1* %y
+  store i1 true, i1* %y
+  %ld_y = load i1, i1* %y
+  %0 = zext i1 %ld_y to i32
+  call void @print_int(i32 %0)
+  ret i32 0
+}

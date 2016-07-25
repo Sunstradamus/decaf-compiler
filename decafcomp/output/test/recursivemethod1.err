@@ -1,0 +1,39 @@
+output prefix: llvm/test/recursivemethod1
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @test(i32) {
+entry:
+  %x = alloca i32
+  store i32 %0, i32* %x
+  %y = alloca i32
+  store i32 0, i32* %y
+  store i32 10, i32* %y
+  %ld_x = load i32, i32* %x
+  %ld_y = load i32, i32* %y
+  %addtmp = add i32 %ld_x, %ld_y
+  ret i32 %addtmp
+  ret i32 0
+}
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  store i32 1, i32* %x
+  %ld_x = load i32, i32* %x
+  %calltmp = call i32 @test(i32 %ld_x)
+  call void @print_int(i32 %calltmp)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/test/recursivemethod1.llvm" -o "llvm/test/recursivemethod1.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/test/recursivemethod1.llvm.bc" -o "llvm/test/recursivemethod1.llvm.s" ... ok
+linking:gcc -o "llvm/test/recursivemethod1.llvm.exec" "llvm/test/recursivemethod1.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/test/recursivemethod1.llvm.exec ... ok

@@ -1,0 +1,36 @@
+output prefix: llvm/dev/expr-testfile-7
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  %y = alloca i1
+  store i1 false, i1* %y
+  store i32 958, i32* %x
+  %y1 = alloca i32
+  store i32 0, i32* %y1
+  %ld_x = load i32, i32* %x
+  %multmp = mul i32 %ld_x, -30
+  %addtmp = add i32 %multmp, 80
+  store i32 %addtmp, i32* %y1
+  %ld_y = load i32, i32* %y1
+  %negtmp = sub i32 0, %ld_y
+  store i32 %negtmp, i32* %x
+  store i1 false, i1* %y
+  %ld_x2 = load i32, i32* %x
+  call void @print_int(i32 %ld_x2)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/expr-testfile-7.llvm" -o "llvm/dev/expr-testfile-7.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/expr-testfile-7.llvm.bc" -o "llvm/dev/expr-testfile-7.llvm.s" ... ok
+linking:gcc -o "llvm/dev/expr-testfile-7.llvm.exec" "llvm/dev/expr-testfile-7.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/expr-testfile-7.llvm.exec ... ok

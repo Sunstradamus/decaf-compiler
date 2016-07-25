@@ -1,0 +1,66 @@
+output prefix: llvm/dev/gcd
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'GreatestCommonDivisor'
+
+@a = global i32 10
+@b = global i32 20
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  %y = alloca i32
+  store i32 0, i32* %y
+  %z = alloca i32
+  store i32 0, i32* %z
+  %ld_a = load i32, i32* @a
+  store i32 %ld_a, i32* %x
+  %ld_b = load i32, i32* @b
+  store i32 %ld_b, i32* %y
+  %ld_x = load i32, i32* %x
+  %ld_y = load i32, i32* %y
+  %calltmp = call i32 @gcd(i32 %ld_x, i32 %ld_y)
+  store i32 %calltmp, i32* %z
+  %ld_z = load i32, i32* %z
+  call void @print_int(i32 %ld_z)
+  ret i32 0
+}
+
+define i32 @gcd(i32, i32) {
+entry:
+  %a = alloca i32
+  store i32 %0, i32* %a
+  %b = alloca i32
+  store i32 %1, i32* %b
+  %ld_b = load i32, i32* %b
+  %eqtmp = icmp eq i32 %ld_b, 0
+  br i1 %eqtmp, label %then, label %else
+
+then:                                             ; preds = %entry
+  %ld_a = load i32, i32* %a
+  ret i32 %ld_a
+  br label %endif
+
+else:                                             ; preds = %entry
+  %ld_b1 = load i32, i32* %b
+  %ld_a2 = load i32, i32* %a
+  %ld_b3 = load i32, i32* %b
+  %modtmp = srem i32 %ld_a2, %ld_b3
+  %calltmp = call i32 @gcd(i32 %ld_b1, i32 %modtmp)
+  ret i32 %calltmp
+  br label %endif
+
+endif:                                            ; preds = %else, %then
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/gcd.llvm" -o "llvm/dev/gcd.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/gcd.llvm.bc" -o "llvm/dev/gcd.llvm.s" ... ok
+linking:gcc -o "llvm/dev/gcd.llvm.exec" "llvm/dev/gcd.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/gcd.llvm.exec ... ok

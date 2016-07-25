@@ -1,0 +1,30 @@
+; ModuleID = 'C'
+
+declare void @print_int(i32)
+
+define i32 @foo(i32, i32, i1) {
+entry:
+  %x = alloca i32
+  store i32 %0, i32* %x
+  %y = alloca i32
+  store i32 %1, i32* %y
+  %z = alloca i1
+  store i1 %2, i1* %z
+  store i32 1, i32* %x
+  store i32 1, i32* %y
+  store i1 false, i1* %z
+  %ld_x = load i32, i32* %x
+  call void @print_int(i32 %ld_x)
+  %ld_y = load i32, i32* %y
+  call void @print_int(i32 %ld_y)
+  %ld_z = load i1, i1* %z
+  %3 = zext i1 %ld_z to i32
+  call void @print_int(i32 %3)
+  ret i32 0
+}
+
+define i32 @main() {
+entry:
+  %calltmp = call i32 @foo(i32 1, i32 2, i1 true)
+  ret i32 0
+}

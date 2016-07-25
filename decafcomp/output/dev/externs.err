@@ -1,0 +1,23 @@
+output prefix: llvm/dev/externs
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'QuickSort'
+
+@x = global i32 0
+
+declare void @print_string(i8*)
+
+declare void @print_int(i32)
+
+define void @main() {
+entry:
+  ret void
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/externs.llvm" -o "llvm/dev/externs.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/externs.llvm.bc" -o "llvm/dev/externs.llvm.s" ... ok
+linking:gcc -o "llvm/dev/externs.llvm.exec" "llvm/dev/externs.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/externs.llvm.exec ... failed (144)

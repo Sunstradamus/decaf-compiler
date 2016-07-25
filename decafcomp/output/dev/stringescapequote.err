@@ -1,0 +1,22 @@
+output prefix: llvm/dev/stringescapequote
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+@cstrtmp = private unnamed_addr constant [2 x i8] c"\22\00"
+
+declare void @print_string(i8*)
+
+define i32 @main() {
+entry:
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp, i32 0, i32 0))
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/stringescapequote.llvm" -o "llvm/dev/stringescapequote.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/stringescapequote.llvm.bc" -o "llvm/dev/stringescapequote.llvm.s" ... ok
+linking:gcc -o "llvm/dev/stringescapequote.llvm.exec" "llvm/dev/stringescapequote.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/stringescapequote.llvm.exec ... ok

@@ -1,0 +1,35 @@
+output prefix: llvm/dev/boolcallcallerexpr
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define void @test(i1) {
+entry:
+  %a = alloca i1
+  store i1 %0, i1* %a
+  call void @print_int(i32 1)
+  ret void
+}
+
+define i32 @main() {
+entry:
+  br i1 true, label %and_right, label %and_end
+
+and_right:                                        ; preds = %entry
+  br label %and_end
+
+and_end:                                          ; preds = %and_right, %entry
+  %andphi = phi i1 [ true, %entry ], [ true, %and_right ]
+  call void @test(i1 %andphi)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/boolcallcallerexpr.llvm" -o "llvm/dev/boolcallcallerexpr.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/boolcallcallerexpr.llvm.bc" -o "llvm/dev/boolcallcallerexpr.llvm.s" ... ok
+linking:gcc -o "llvm/dev/boolcallcallerexpr.llvm.exec" "llvm/dev/boolcallcallerexpr.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/boolcallcallerexpr.llvm.exec ... ok

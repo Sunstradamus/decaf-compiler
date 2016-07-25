@@ -1,0 +1,1 @@
+Assertion failed: (dynamic_cast<decafEmptyExpression*>(Value) != NULL), function Codegen, file ./decafcomp.cc, line 849.

@@ -1,0 +1,42 @@
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  %y = alloca i1
+  store i1 false, i1* %y
+  %z = alloca i1
+  store i1 false, i1* %z
+  store i32 958, i32* %x
+  %ld_x = load i32, i32* %x
+  %negtmp = sub i32 0, %ld_x
+  store i32 %negtmp, i32* %x
+  store i1 true, i1* %y
+  store i1 false, i1* %z
+  br i1 true, label %and_right, label %and_end
+
+and_right:                                        ; preds = %entry
+  %ld_y = load i1, i1* %y
+  %andtmp = and i1 true, %ld_y
+  br label %and_end
+
+and_end:                                          ; preds = %and_right, %entry
+  %andphi = phi i1 [ true, %entry ], [ %andtmp, %and_right ]
+  br i1 %andphi, label %or_end, label %or_right
+
+or_right:                                         ; preds = %and_end
+  %ld_z = load i1, i1* %z
+  %ortmp = or i1 %andphi, %ld_z
+  br label %or_end
+
+or_end:                                           ; preds = %or_right, %and_end
+  %orphi = phi i1 [ %andphi, %and_end ], [ %ortmp, %or_right ]
+  store i1 %orphi, i1* %y
+  %ld_x1 = load i32, i32* %x
+  %negtmp2 = sub i32 0, %ld_x1
+  call void @print_int(i32 %negtmp2)
+  ret i32 0
+}

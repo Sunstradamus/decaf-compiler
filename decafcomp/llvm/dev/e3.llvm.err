@@ -1,0 +1,3 @@
+Error: string constant is missing closing delimiter
+11: syntax error at char 21
+; ModuleID = 'Test'

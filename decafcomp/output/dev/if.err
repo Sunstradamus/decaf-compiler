@@ -1,0 +1,9 @@
+output prefix: llvm/dev/if
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... failed (-6)
+Assertion failed: (Val && "isa<> used on a null pointer"), function doit, file /opt/local/libexec/llvm-3.8/include/llvm/Support/Casting.h, line 95.
+codegen failed

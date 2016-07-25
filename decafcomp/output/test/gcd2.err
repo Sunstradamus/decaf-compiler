@@ -1,0 +1,85 @@
+output prefix: llvm/test/gcd2
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'GreatestCommonDivisor'
+
+@a = global i32 10
+@b = global i32 20
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %z = alloca i32
+  store i32 0, i32* %z
+  %ld_a = load i32, i32* @a
+  %ld_b = load i32, i32* @b
+  %calltmp = call i32 @gcd(i32 %ld_a, i32 %ld_b)
+  call void @print_int(i32 %calltmp)
+  ret i32 0
+}
+
+define i1 @iszero(i32, i32) {
+entry:
+  %a = alloca i32
+  store i32 %0, i32* %a
+  %b = alloca i32
+  store i32 %1, i32* %b
+  %ld_b = load i32, i32* %b
+  %eqtmp = icmp eq i32 %ld_b, 0
+  br i1 %eqtmp, label %then, label %else
+
+then:                                             ; preds = %entry
+  %ld_a = load i32, i32* %a
+  ret i32 %ld_a
+  br label %endif
+
+else:                                             ; preds = %entry
+  %ld_b1 = load i32, i32* %b
+  %ld_a2 = load i32, i32* %a
+  %ld_b3 = load i32, i32* %b
+  %modtmp = srem i32 %ld_a2, %ld_b3
+  %calltmp = call i32 @gcd(i32 %ld_b1, i32 %modtmp)
+  ret i32 %calltmp
+  br label %endif
+
+endif:                                            ; preds = %else, %then
+  ret i1 false
+}
+
+define i32 @gcd(i32, i32) {
+entry:
+  %a = alloca i32
+  store i32 %0, i32* %a
+  %b = alloca i32
+  store i32 %1, i32* %b
+  %ld_a = load i32, i32* %a
+  %ld_b = load i32, i32* %b
+  %calltmp = call i1 @iszero(i32 %ld_a, i32 %ld_b)
+  ret i1 %calltmp
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/test/gcd2.llvm" -o "llvm/test/gcd2.llvm.bc" ... failed (1)
+/opt/local/libexec/llvm-3.8/bin/llvm-as: llvm/test/gcd2.llvm:31:7: error: value doesn't match function result type 'i1'
+  ret i32 %ld_a
+      ^
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/test/gcd2.llvm.bc" -o "llvm/test/gcd2.llvm.s" ... failed (1)
+/opt/local/libexec/llvm-3.8/bin/llc: llvm/test/gcd2.llvm.bc: error: Could not open input file: No such file or directory
+linking:gcc -o "llvm/test/gcd2.llvm.exec" "llvm/test/gcd2.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... failed (1)
+clang: error: no such file or directory: 'llvm/test/gcd2.llvm.s'
+running:llvm/test/gcd2.llvm.exec ...Traceback (most recent call last):
+  File "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/llvm-run", line 172, in <module>
+    result &= run("running", "%s.llvm.exec" % (out_prefix), ".run", None, out_prefix)
+  File "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/llvm-run", line 90, in run
+    retval = subprocess.call(shlex.split(cmd), stdin=infile, stdout=outoutfile, stderr=outerrfile)
+  File "/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/subprocess.py", line 522, in call
+    return Popen(*popenargs, **kwargs).wait()
+  File "/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/subprocess.py", line 710, in __init__
+    errread, errwrite)
+  File "/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/subprocess.py", line 1335, in _execute_child
+    raise child_exception
+OSError: [Errno 2] No such file or directory

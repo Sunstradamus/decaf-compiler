@@ -1,0 +1,26 @@
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define void @test(i1) {
+entry:
+  %a = alloca i1
+  store i1 %0, i1* %a
+  %ld_a = load i1, i1* %a
+  br i1 %ld_a, label %or_end, label %or_right
+
+or_right:                                         ; preds = %entry
+  br label %or_end
+
+or_end:                                           ; preds = %or_right, %entry
+  %orphi = phi i1 [ %ld_a, %entry ], [ %ld_a, %or_right ]
+  %1 = zext i1 %orphi to i32
+  call void @print_int(i32 %1)
+  ret void
+}
+
+define i32 @main() {
+entry:
+  call void @test(i1 true)
+  ret i32 0
+}

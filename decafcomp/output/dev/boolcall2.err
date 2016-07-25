@@ -1,0 +1,30 @@
+output prefix: llvm/dev/boolcall2
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define void @test(i1, i1) {
+entry:
+  %a = alloca i1
+  store i1 %0, i1* %a
+  %b = alloca i1
+  store i1 %1, i1* %b
+  call void @print_int(i32 2)
+  ret void
+}
+
+define i32 @main() {
+entry:
+  call void @test(i1 true, i1 false)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/boolcall2.llvm" -o "llvm/dev/boolcall2.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/boolcall2.llvm.bc" -o "llvm/dev/boolcall2.llvm.s" ... ok
+linking:gcc -o "llvm/dev/boolcall2.llvm.exec" "llvm/dev/boolcall2.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/boolcall2.llvm.exec ... ok

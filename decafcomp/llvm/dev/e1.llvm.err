@@ -1,0 +1,3 @@
+Error: unknown escape sequence in string constant
+11: syntax error at char 21
+; ModuleID = 'Test'

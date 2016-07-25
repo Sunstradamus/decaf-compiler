@@ -1,0 +1,33 @@
+output prefix: llvm/dev/forward2
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  call void @test(i32 10, i32 13)
+  ret i32 0
+}
+
+define void @test(i32, i32) {
+entry:
+  %a = alloca i32
+  store i32 %0, i32* %a
+  %b = alloca i32
+  store i32 %1, i32* %b
+  %ld_a = load i32, i32* %a
+  call void @print_int(i32 %ld_a)
+  %ld_b = load i32, i32* %b
+  call void @print_int(i32 %ld_b)
+  ret void
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/forward2.llvm" -o "llvm/dev/forward2.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/forward2.llvm.bc" -o "llvm/dev/forward2.llvm.s" ... ok
+linking:gcc -o "llvm/dev/forward2.llvm.exec" "llvm/dev/forward2.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/forward2.llvm.exec ... ok

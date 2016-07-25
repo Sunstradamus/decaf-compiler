@@ -1,0 +1,1 @@
+Assertion failed: (method != NULL), function Codegen, file ./decafcomp.cc, line 806.

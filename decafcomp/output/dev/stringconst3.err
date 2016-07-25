@@ -1,0 +1,26 @@
+output prefix: llvm/dev/stringconst3
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+@cstrtmp = private unnamed_addr constant [7 x i8] c"hello,\00"
+@cstrtmp.1 = private unnamed_addr constant [7 x i8] c" world\00"
+@cstrtmp.2 = private unnamed_addr constant [2 x i8] c"\0A\00"
+
+declare void @print_string(i8*)
+
+define i32 @main() {
+entry:
+  call void @print_string(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @cstrtmp, i32 0, i32 0))
+  call void @print_string(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @cstrtmp.1, i32 0, i32 0))
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.2, i32 0, i32 0))
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/stringconst3.llvm" -o "llvm/dev/stringconst3.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/stringconst3.llvm.bc" -o "llvm/dev/stringconst3.llvm.s" ... ok
+linking:gcc -o "llvm/dev/stringconst3.llvm.exec" "llvm/dev/stringconst3.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/stringconst3.llvm.exec ... ok

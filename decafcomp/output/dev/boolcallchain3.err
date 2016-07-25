@@ -1,0 +1,54 @@
+output prefix: llvm/dev/boolcallchain3
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define void @test3(i1) {
+entry:
+  %a = alloca i1
+  store i1 %0, i1* %a
+  %ld_a = load i1, i1* %a
+  %1 = zext i1 %ld_a to i32
+  call void @print_int(i32 %1)
+  ret void
+}
+
+define void @test2(i1) {
+entry:
+  %a = alloca i1
+  store i1 %0, i1* %a
+  %ld_a = load i1, i1* %a
+  %1 = zext i1 %ld_a to i32
+  call void @print_int(i32 %1)
+  %ld_a1 = load i1, i1* %a
+  call void @test3(i1 %ld_a1)
+  ret void
+}
+
+define void @test1(i1) {
+entry:
+  %a = alloca i1
+  store i1 %0, i1* %a
+  %ld_a = load i1, i1* %a
+  %1 = zext i1 %ld_a to i32
+  call void @print_int(i32 %1)
+  %ld_a1 = load i1, i1* %a
+  call void @test2(i1 %ld_a1)
+  ret void
+}
+
+define i32 @main() {
+entry:
+  call void @test1(i1 true)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/boolcallchain3.llvm" -o "llvm/dev/boolcallchain3.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/boolcallchain3.llvm.bc" -o "llvm/dev/boolcallchain3.llvm.s" ... ok
+linking:gcc -o "llvm/dev/boolcallchain3.llvm.exec" "llvm/dev/boolcallchain3.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/boolcallchain3.llvm.exec ... ok

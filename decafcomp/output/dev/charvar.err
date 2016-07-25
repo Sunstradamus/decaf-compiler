@@ -1,0 +1,29 @@
+output prefix: llvm/dev/charvar
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  %y = alloca i32
+  store i32 0, i32* %y
+  store i32 102, i32* %x
+  store i32 97, i32* %y
+  %ld_x = load i32, i32* %x
+  %ld_y = load i32, i32* %y
+  %subtmp = sub i32 %ld_x, %ld_y
+  call void @print_int(i32 %subtmp)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/charvar.llvm" -o "llvm/dev/charvar.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/charvar.llvm.bc" -o "llvm/dev/charvar.llvm.s" ... ok
+linking:gcc -o "llvm/dev/charvar.llvm.exec" "llvm/dev/charvar.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/charvar.llvm.exec ... ok

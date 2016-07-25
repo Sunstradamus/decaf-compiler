@@ -1,0 +1,57 @@
+output prefix: llvm/dev/or
+llvmas: /opt/local/libexec/llvm-3.8/bin/llvm-as
+llc: /opt/local/libexec/llvm-3.8/bin/llc
+cc: gcc
+codegen: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp
+stdlib: /Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c
+generating llvm code:/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decafcomp ... ok
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  br i1 true, label %or_end, label %or_right
+
+or_right:                                         ; preds = %entry
+  br label %or_end
+
+or_end:                                           ; preds = %or_right, %entry
+  %orphi = phi i1 [ true, %entry ], [ true, %or_right ]
+  %0 = zext i1 %orphi to i32
+  call void @print_int(i32 %0)
+  br i1 true, label %or_end2, label %or_right1
+
+or_right1:                                        ; preds = %or_end
+  br label %or_end2
+
+or_end2:                                          ; preds = %or_right1, %or_end
+  %orphi3 = phi i1 [ true, %or_end ], [ true, %or_right1 ]
+  %1 = zext i1 %orphi3 to i32
+  call void @print_int(i32 %1)
+  br i1 false, label %or_end5, label %or_right4
+
+or_right4:                                        ; preds = %or_end2
+  br label %or_end5
+
+or_end5:                                          ; preds = %or_right4, %or_end2
+  %orphi6 = phi i1 [ false, %or_end2 ], [ true, %or_right4 ]
+  %2 = zext i1 %orphi6 to i32
+  call void @print_int(i32 %2)
+  br i1 false, label %or_end8, label %or_right7
+
+or_right7:                                        ; preds = %or_end5
+  br label %or_end8
+
+or_end8:                                          ; preds = %or_right7, %or_end5
+  %orphi9 = phi i1 [ false, %or_end5 ], [ false, %or_right7 ]
+  %3 = zext i1 %orphi9 to i32
+  call void @print_int(i32 %3)
+  ret i32 0
+}
+assembling to bitcode:/opt/local/libexec/llvm-3.8/bin/llvm-as "llvm/dev/or.llvm" -o "llvm/dev/or.llvm.bc" ... ok
+converting to native code:/opt/local/libexec/llvm-3.8/bin/llc "llvm/dev/or.llvm.bc" -o "llvm/dev/or.llvm.s" ... ok
+linking:gcc -o "llvm/dev/or.llvm.exec" "llvm/dev/or.llvm.s" "/Users/paul/Documents/school/SFU/Courses/Summer2016/CMPT379/homework1/decafcomp/answer/decaf-stdlib.c" ... ok
+running:llvm/dev/or.llvm.exec ... ok

@@ -1,0 +1,16 @@
+; ModuleID = 'C'
+
+define void @f() {
+entry:
+  br label %whilecond
+
+whilecond:                                        ; preds = %whilebody, %entry
+  br i1 true, label %whilebody, label %endwhile
+
+whilebody:                                        ; preds = %whilecond
+  br label %endwhile
+  br label %whilecond
+
+endwhile:                                         ; preds = %whilebody, %whilecond
+  ret void
+}

@@ -1,0 +1,46 @@
+; ModuleID = 'Test'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  br i1 true, label %and_right, label %and_end
+
+and_right:                                        ; preds = %entry
+  br label %and_end
+
+and_end:                                          ; preds = %and_right, %entry
+  %andphi = phi i1 [ true, %entry ], [ true, %and_right ]
+  %0 = zext i1 %andphi to i32
+  call void @print_int(i32 %0)
+  br i1 true, label %and_right1, label %and_end2
+
+and_right1:                                       ; preds = %and_end
+  br label %and_end2
+
+and_end2:                                         ; preds = %and_right1, %and_end
+  %andphi3 = phi i1 [ true, %and_end ], [ false, %and_right1 ]
+  %1 = zext i1 %andphi3 to i32
+  call void @print_int(i32 %1)
+  br i1 false, label %and_right4, label %and_end5
+
+and_right4:                                       ; preds = %and_end2
+  br label %and_end5
+
+and_end5:                                         ; preds = %and_right4, %and_end2
+  %andphi6 = phi i1 [ false, %and_end2 ], [ false, %and_right4 ]
+  %2 = zext i1 %andphi6 to i32
+  call void @print_int(i32 %2)
+  br i1 false, label %and_right7, label %and_end8
+
+and_right7:                                       ; preds = %and_end5
+  br label %and_end8
+
+and_end8:                                         ; preds = %and_right7, %and_end5
+  %andphi9 = phi i1 [ false, %and_end5 ], [ false, %and_right7 ]
+  %3 = zext i1 %andphi9 to i32
+  call void @print_int(i32 %3)
+  ret i32 0
+}
