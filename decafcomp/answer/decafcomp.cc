@@ -77,7 +77,9 @@ public:
 	void insert_symtbl(string ident, llvm::Value *alloca) {
 		if (isblock) {
 			// cerr << "inserted " << ident << " into symbol table." << endl;
-			symTable.insert(pair<string,llvm::Value*>(ident,alloca));
+			std::pair<std::map<string,llvm::Value*>::iterator,bool> ret;
+			ret = symTable.insert(pair<string,llvm::Value*>(ident,alloca));
+			assert(ret.second != false);
 		}
 		else {
 			// cerr << "Can't store " << ident << ". Looking in parent..." << endl;
