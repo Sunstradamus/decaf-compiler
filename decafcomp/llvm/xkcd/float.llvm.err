@@ -1,0 +1,64 @@
+; ModuleID = 'float'
+
+@cstrtmp = private unnamed_addr constant [2 x i8] c"/\00"
+@cstrtmp.1 = private unnamed_addr constant [4 x i8] c" = \00"
+@cstrtmp.2 = private unnamed_addr constant [2 x i8] c".\00"
+@cstrtmp.3 = private unnamed_addr constant [2 x i8] c"\0A\00"
+
+declare void @print_int(i32)
+
+declare void @print_string(i8*)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  %y = alloca i32
+  store i32 0, i32* %y
+  store i32 -14, i32* %x
+  store i32 13, i32* %y
+  %ld_x = load i32, i32* %x
+  call void @print_int(i32 %ld_x)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp, i32 0, i32 0))
+  %ld_y = load i32, i32* %y
+  call void @print_int(i32 %ld_y)
+  call void @print_string(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @cstrtmp.1, i32 0, i32 0))
+  %ld_x1 = load i32, i32* %x
+  %ld_y2 = load i32, i32* %y
+  %divtmp = sdiv i32 %ld_x1, %ld_y2
+  call void @print_int(i32 %divtmp)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.2, i32 0, i32 0))
+  %ld_x3 = load i32, i32* %x
+  %multmp = mul i32 %ld_x3, 10000000
+  %ld_y4 = load i32, i32* %y
+  %divtmp5 = sdiv i32 %multmp, %ld_y4
+  %ld_x6 = load i32, i32* %x
+  %ld_y7 = load i32, i32* %y
+  %divtmp8 = sdiv i32 %ld_x6, %ld_y7
+  %multmp9 = mul i32 %divtmp8, 10000000
+  %subtmp = sub i32 %divtmp5, %multmp9
+  %calltmp = call i32 @abs(i32 %subtmp)
+  call void @print_int(i32 %calltmp)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.3, i32 0, i32 0))
+  ret i32 0
+}
+
+define i32 @abs(i32) {
+entry:
+  %x = alloca i32
+  store i32 %0, i32* %x
+  %ld_x = load i32, i32* %x
+  %gttmp = icmp sgt i32 %ld_x, 0
+  br i1 %gttmp, label %then, label %endif
+
+then:                                             ; preds = %entry
+  %ld_x1 = load i32, i32* %x
+  ret i32 %ld_x1
+  br label %endif
+
+endif:                                            ; preds = %then, %entry
+  %ld_x2 = load i32, i32* %x
+  %negtmp = sub i32 0, %ld_x2
+  ret i32 %negtmp
+  ret i32 0
+}

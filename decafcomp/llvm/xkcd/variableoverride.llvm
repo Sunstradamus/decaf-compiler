@@ -1,0 +1,29 @@
+; ModuleID = 'variableoverride'
+
+declare void @print_int(i32)
+
+declare void @print_string(i8*)
+
+define i32 @main() {
+entry:
+  %main = alloca i32
+  store i32 0, i32* %main
+  store i32 2, i32* %main
+  %ld_main = load i32, i32* %main
+  %lttmp = icmp slt i32 %ld_main, 3
+  br i1 %lttmp, label %then, label %endif
+
+then:                                             ; preds = %entry
+  %main1 = alloca i1
+  store i1 false, i1* %main1
+  %ld_main2 = load i1, i1* %main1
+  %nottmp = xor i1 %ld_main2, true
+  store i1 %nottmp, i1* %main1
+  br label %endif
+
+endif:                                            ; preds = %then, %entry
+  %ld_main3 = load i32, i32* %main
+  call void @print_int(i32 %ld_main3)
+  ret i32 0
+  ret i32 0
+}

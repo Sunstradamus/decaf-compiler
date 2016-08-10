@@ -1,0 +1,39 @@
+; ModuleID = 'bitshift_small'
+
+@cstrtmp = private unnamed_addr constant [2 x i8] c"\0A\00"
+@cstrtmp.1 = private unnamed_addr constant [2 x i8] c"\0A\00"
+@cstrtmp.2 = private unnamed_addr constant [2 x i8] c"\0A\00"
+
+declare void @print_int(i32)
+
+declare void @print_string(i8*)
+
+define i1 @main() {
+entry:
+  %_ = alloca i32
+  store i32 0, i32* %_
+  %__ = alloca i32
+  store i32 0, i32* %__
+  %___ = alloca i32
+  store i32 0, i32* %___
+  store i32 4, i32* %_
+  store i32 3, i32* %__
+  %ld__ = load i32, i32* %_
+  %ld___ = load i32, i32* %__
+  %lshtmp = shl i32 %ld__, %ld___
+  store i32 %lshtmp, i32* %___
+  %ld____ = load i32, i32* %___
+  %rshtmp = lshr i32 %ld____, 2
+  call void @print_int(i32 %rshtmp)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp, i32 0, i32 0))
+  %ld____1 = load i32, i32* %___
+  %rshtmp2 = lshr i32 %ld____1, 5
+  call void @print_int(i32 %rshtmp2)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.1, i32 0, i32 0))
+  %ld____3 = load i32, i32* %___
+  %rshtmp4 = lshr i32 %ld____3, 6
+  call void @print_int(i32 %rshtmp4)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.2, i32 0, i32 0))
+  ret i32 0
+  ret i1 false
+}

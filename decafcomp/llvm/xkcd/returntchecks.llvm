@@ -1,0 +1,45 @@
+; ModuleID = 'bitshift_small'
+
+declare void @print_int(i32)
+
+declare void @print_string(i8*)
+
+define i1 @main() {
+entry:
+  %calltmp = call i32 @foo1()
+  call void @print_int(i32 %calltmp)
+  ret i1 false
+}
+
+define i32 @foo1() {
+entry:
+  %calltmp = call i32 @foo2()
+  %addtmp = add i32 1, %calltmp
+  ret i32 %addtmp
+  ret i32 0
+}
+
+define i32 @foo2() {
+entry:
+  %calltmp = call i1 @foo3()
+  %nottmp = xor i1 %calltmp, true
+  %0 = zext i1 %nottmp to i32
+  %calltmp1 = call i32 @intcast(i32 %0)
+  ret i32 %calltmp1
+  ret i32 0
+}
+
+define i1 @foo3() {
+entry:
+  ret i1 true
+  ret i1 false
+}
+
+define i32 @intcast(i32) {
+entry:
+  %x = alloca i32
+  store i32 %0, i32* %x
+  %ld_x = load i32, i32* %x
+  ret i32 %ld_x
+  ret i32 0
+}

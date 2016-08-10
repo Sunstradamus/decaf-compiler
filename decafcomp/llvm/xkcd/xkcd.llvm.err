@@ -1,0 +1,51 @@
+; ModuleID = 'xkcd'
+
+declare void @print_int(i32)
+
+declare void @print_string(i8*)
+
+define i32 @main() {
+entry:
+  %calltmp = call i32 @d()
+  %calltmp1 = call i32 @c(i32 %calltmp)
+  %calltmp2 = call i32 @k(i32 %calltmp1)
+  %calltmp3 = call i32 @x(i32 %calltmp2)
+  call void @print_int(i32 %calltmp3)
+  ret i32 0
+}
+
+define i32 @x(i32) {
+entry:
+  %a = alloca i32
+  store i32 %0, i32* %a
+  %ld_a = load i32, i32* %a
+  %multmp = mul i32 %ld_a, 2
+  ret i32 %multmp
+  ret i32 0
+}
+
+define i32 @k(i32) {
+entry:
+  %a = alloca i32
+  store i32 %0, i32* %a
+  %ld_a = load i32, i32* %a
+  %multmp = mul i32 %ld_a, 3
+  ret i32 %multmp
+  ret i32 0
+}
+
+define i32 @c(i32) {
+entry:
+  %a = alloca i32
+  store i32 %0, i32* %a
+  %ld_a = load i32, i32* %a
+  %addtmp = add i32 %ld_a, 4
+  ret i32 %addtmp
+  ret i32 0
+}
+
+define i32 @d() {
+entry:
+  ret i32 3
+  ret i32 0
+}

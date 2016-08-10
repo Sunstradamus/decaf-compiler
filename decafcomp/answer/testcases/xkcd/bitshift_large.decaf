@@ -1,7 +1,7 @@
 extern func print_int(int) void;
 extern func print_string(string) void;
 
-package nametest {
+package bitshift_large {
     
     func main() bool {
         var _,__,___ int;
