@@ -1,0 +1,46 @@
+; ModuleID = 'condition'
+
+@a = global [10 x i32] zeroinitializer
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  %y = alloca i32
+  store i32 0, i32* %y
+  store i32 3, i32* %x
+  store i32 5, i32* %y
+  store i32 6, i32* getelementptr inbounds ([10 x i32], [10 x i32]* @a, i32 0, i32 0)
+  store i32 5, i32* getelementptr inbounds ([10 x i32], [10 x i32]* @a, i32 0, i32 1)
+  store i32 7, i32* %x
+  br label %forcond
+
+forcond:                                          ; preds = %forbody, %entry
+  %ld_a = load i32, i32* getelementptr inbounds ([10 x i32], [10 x i32]* @a, i32 0, i32 0)
+  %ld_a1 = load i32, i32* getelementptr inbounds ([10 x i32], [10 x i32]* @a, i32 0, i32 1)
+  %lttmp = icmp slt i32 %ld_a, %ld_a1
+  br i1 %lttmp, label %or_end, label %or_right
+
+or_right:                                         ; preds = %forcond
+  %ld_x = load i32, i32* %x
+  %lttmp2 = icmp slt i32 %ld_x, 10
+  %ortmp = or i1 %lttmp, %lttmp2
+  br label %or_end
+
+or_end:                                           ; preds = %or_right, %forcond
+  %orphi = phi i1 [ %lttmp, %forcond ], [ %ortmp, %or_right ]
+  br i1 %orphi, label %forbody, label %endfor
+
+forbody:                                          ; preds = %or_end
+  %ld_x3 = load i32, i32* %x
+  %addtmp = add i32 %ld_x3, 1
+  store i32 %addtmp, i32* %x
+  br label %forcond
+
+endfor:                                           ; preds = %or_end
+  %ld_x4 = load i32, i32* %x
+  call void @print_int(i32 %ld_x4)
+  ret i32 0
+}

@@ -35,8 +35,10 @@ else:                                             ; preds = %entry
   %ld_b1 = load i32, i32* %b
   %ld_a2 = load i32, i32* %a
   %ld_b3 = load i32, i32* %b
-  %modtmp = srem i32 %ld_a2, %ld_b3
-  %calltmp = call i32 @gcd(i32 %ld_b1, i32 %modtmp)
+  %mod_1part = srem i32 %ld_a2, %ld_b3
+  %mod_2part = add i32 %ld_b3, %mod_1part
+  %mod_3part = srem i32 %mod_2part, %ld_b3
+  %calltmp = call i32 @gcd(i32 %ld_b1, i32 %mod_3part)
   ret i32 %calltmp
   br label %endif
 

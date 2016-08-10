@@ -1,1 +1,1 @@
-Assertion failed: (alloca != NULL), function Codegen, file ./decafcomp.cc, line 1483.
+Assertion failed: (alloca != NULL), function Codegen, file ./decafcomp.cc, line 1492.

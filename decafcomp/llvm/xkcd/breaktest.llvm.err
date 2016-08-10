@@ -1,0 +1,90 @@
+; ModuleID = 'breaktest'
+
+declare void @print_string(i8*)
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %i = alloca i32
+  store i32 0, i32* %i
+  store i32 0, i32* %i
+  br label %forcond
+
+forcond:                                          ; preds = %forassign, %entry
+  %ld_i = load i32, i32* %i
+  %lttmp = icmp slt i32 %ld_i, 20
+  br i1 %lttmp, label %forbody, label %endfor
+
+forbody:                                          ; preds = %forcond
+  %ld_i1 = load i32, i32* %i
+  %gttmp = icmp sgt i32 %ld_i1, 1
+  br i1 %gttmp, label %then, label %endif18
+
+then:                                             ; preds = %forbody
+  %ld_i2 = load i32, i32* %i
+  %gttmp3 = icmp sgt i32 %ld_i2, 2
+  br i1 %gttmp3, label %then4, label %endif17
+
+then4:                                            ; preds = %then
+  %ld_i5 = load i32, i32* %i
+  %gttmp6 = icmp sgt i32 %ld_i5, 3
+  br i1 %gttmp6, label %then7, label %endif16
+
+then7:                                            ; preds = %then4
+  %ld_i8 = load i32, i32* %i
+  %lttmp9 = icmp slt i32 %ld_i8, 10
+  br i1 %lttmp9, label %then10, label %else
+
+then10:                                           ; preds = %then7
+  br label %forassign
+  call void @print_int(i32 3)
+  br label %endfor
+  br label %endif15
+
+else:                                             ; preds = %then7
+  %ld_i11 = load i32, i32* %i
+  %lttmp12 = icmp slt i32 %ld_i11, 15
+  br i1 %lttmp12, label %then13, label %endif
+
+then13:                                           ; preds = %else
+  br label %whilecond
+
+whilecond:                                        ; preds = %whilebody, %then13
+  br i1 true, label %whilebody, label %endwhile
+
+whilebody:                                        ; preds = %whilecond
+  br label %endwhile
+  br label %endwhile
+  br label %whilecond
+
+endwhile:                                         ; preds = %whilebody, %whilebody, %whilecond
+  %ld_i14 = load i32, i32* %i
+  call void @print_int(i32 %ld_i14)
+  br label %endfor
+  br label %endif
+
+endif:                                            ; preds = %endwhile, %else
+  br label %endif15
+
+endif15:                                          ; preds = %endif, %then10
+  br label %endif16
+
+endif16:                                          ; preds = %endif15, %then4
+  br label %endif17
+
+endif17:                                          ; preds = %endif16, %then
+  br label %endif18
+
+endif18:                                          ; preds = %endif17, %forbody
+  br label %forassign
+
+forassign:                                        ; preds = %endif18, %then10
+  %ld_i19 = load i32, i32* %i
+  %addtmp = add i32 %ld_i19, 1
+  store i32 %addtmp, i32* %i
+  br label %forcond
+
+endfor:                                           ; preds = %endwhile, %then10, %forcond
+  ret i32 0
+}

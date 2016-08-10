@@ -1,1 +1,1 @@
-Assertion failed: (alloca), function Codegen, file ./decafcomp.cc, line 1510.
+Assertion failed: (alloca), function Codegen, file ./decafcomp.cc, line 1519.

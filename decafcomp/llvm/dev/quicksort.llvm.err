@@ -29,7 +29,7 @@ entry:
   store i32 %ld_start, i32* %j
   br label %forcond
 
-forcond:                                          ; preds = %endif, %entry
+forcond:                                          ; preds = %forassign, %entry
   %ld_j = load i32, i32* %j
   %ld_start1 = load i32, i32* %start
   %ld_len = load i32, i32* %len
@@ -47,8 +47,10 @@ forbody:                                          ; preds = %forcond
   %ld_start4 = load i32, i32* %start
   %subtmp = sub i32 %ld_j3, %ld_start4
   %addtmp5 = add i32 %subtmp, 1
-  %modtmp = srem i32 %addtmp5, 20
-  %eqtmp = icmp eq i32 %modtmp, 0
+  %mod_1part = srem i32 %addtmp5, 20
+  %mod_2part = add i32 20, %mod_1part
+  %mod_3part = srem i32 %mod_2part, 20
+  %eqtmp = icmp eq i32 %mod_3part, 0
   br i1 %eqtmp, label %or_end, label %or_right
 
 or_right:                                         ; preds = %forbody
@@ -70,6 +72,9 @@ then:                                             ; preds = %or_end
   br label %endif
 
 endif:                                            ; preds = %then, %or_end
+  br label %forassign
+
+forassign:                                        ; preds = %endif
   %ld_j12 = load i32, i32* %j
   %addtmp13 = add i32 %ld_j12, 1
   store i32 %addtmp13, i32* %j
@@ -88,7 +93,7 @@ entry:
   store i32 0, i32* %i
   br label %forcond
 
-forcond:                                          ; preds = %forbody, %entry
+forcond:                                          ; preds = %forassign, %entry
   %ld_i = load i32, i32* %i
   %ld_size = load i32, i32* %size
   %lttmp = icmp slt i32 %ld_i, %ld_size
@@ -99,8 +104,13 @@ forbody:                                          ; preds = %forcond
   %arrayindex = getelementptr i32, i32* getelementptr inbounds ([100 x i32], [100 x i32]* @list, i32 0, i32 0), i32 %ld_i1
   %ld_i2 = load i32, i32* %i
   %multmp = mul i32 %ld_i2, 2382983
-  %modtmp = srem i32 %multmp, 100
-  store i32 %modtmp, i32* %arrayindex
+  %mod_1part = srem i32 %multmp, 100
+  %mod_2part = add i32 100, %mod_1part
+  %mod_3part = srem i32 %mod_2part, 100
+  store i32 %mod_3part, i32* %arrayindex
+  br label %forassign
+
+forassign:                                        ; preds = %forbody
   %ld_i3 = load i32, i32* %i
   %addtmp = add i32 %ld_i3, 1
   store i32 %addtmp, i32* %i

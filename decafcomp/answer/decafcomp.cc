@@ -576,7 +576,7 @@ public:
 		if (cond == NULL) return NULL;
 		Builder.CreateCondBr(cond, WhileBodyBB, EndWhileBB);
 		// Update WhileCondBB
-		WhileCondBB = Builder.GetInsertBlock();
+		//WhileCondBB = Builder.GetInsertBlock();
 		
 		// Add the body of the while loop and a jump to the beginning
 		TheFunction->getBasicBlockList().push_back(WhileBodyBB);
@@ -625,10 +625,11 @@ public:
 		// Define the blocks
 		llvm::BasicBlock *ForCondBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "forcond", TheFunction);
 		llvm::BasicBlock *ForBodyBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "forbody");
+		llvm::BasicBlock *ForAssignBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "forassign");
 		llvm::BasicBlock *EndForBB = llvm::BasicBlock::Create(llvm::getGlobalContext(), "endfor");
 
 		// Used for break and continue statements
-		Start = ForCondBB;
+		Start = ForAssignBB;
 		End = EndForBB;
 
 		// Execute the pre-assign code first
@@ -641,14 +642,17 @@ public:
 		if (cond == NULL) return NULL;
 		Builder.CreateCondBr(cond, ForBodyBB, EndForBB);
 		// Update ForCondBB
-		ForCondBB = Builder.GetInsertBlock();
+		//ForCondBB = Builder.GetInsertBlock();
 		
 		// Add the body of the for loop
 		TheFunction->getBasicBlockList().push_back(ForBodyBB);
 		Builder.SetInsertPoint(ForBodyBB);
 		ForBlock->Codegen();
+		Builder.CreateBr(ForAssignBB);
 		
 		// Update the loop assignment and jump to the beginning
+		TheFunction->getBasicBlockList().push_back(ForAssignBB);
+		Builder.SetInsertPoint(ForAssignBB);
 		LoopAssign->Codegen();
 		Builder.CreateBr(ForCondBB);
 		
@@ -851,10 +855,12 @@ public:
         }
         else {
             // If method is NOT void and there isn't an expr val, throw error
-            assert(dynamic_cast<decafEmptyExpression*>(Value) == NULL);
-
+            //assert(dynamic_cast<decafEmptyExpression*>(Value) == NULL);
+            if (dynamic_cast<decafEmptyExpression*>(Value) != NULL) {
+                return Builder.CreateRet(llvm::Constant::getNullValue(type->LLVMType()));
+            }
             llvm::Value *val = Value->Codegen();
-            assert(val->getType()->getTypeID() == type->LLVMType()->getTypeID());
+            //assert(val->getType()->getTypeID() == type->LLVMType()->getTypeID());
             return Builder.CreateRet(val);
         }
 	}
@@ -1219,7 +1225,15 @@ public:
 	llvm::Value *Codegen() {
 		llvm::Value *L = Left->Codegen();
 		if (L == 0 ) return 0;
-
+        
+		if (Op->str().compare("Mod") == 0) {
+			assert(L->getType()->isIntegerTy());
+			llvm::Value *R = Right->Codegen();
+			assert(R->getType()->isIntegerTy());
+            llvm::Value *Mod1 = Builder.CreateSRem(L, R, "mod_1part");
+            llvm::Value *Add = Builder.CreateAdd(R, Mod1, "mod_2part");
+            return Builder.CreateSRem(Add, R, "mod_3part");
+		}
 		if (Op->str().compare("And") == 0) {
 			assert(L->getType()->isIntegerTy(1));
 			// We want to insert a new block after the current one
@@ -1298,11 +1312,6 @@ public:
 			assert(L->getType()->isIntegerTy());
 			assert(R->getType()->isIntegerTy());
 			return Builder.CreateSDiv(L, R, "divtmp");
-		}
-		if (Op->str().compare("Mod") == 0) {
-			assert(L->getType()->isIntegerTy());
-			assert(R->getType()->isIntegerTy());
-			return Builder.CreateSRem(L, R, "modtmp");
 		}
 		if (Op->str().compare("Rightshift") == 0) {
 			assert(L->getType()->isIntegerTy());

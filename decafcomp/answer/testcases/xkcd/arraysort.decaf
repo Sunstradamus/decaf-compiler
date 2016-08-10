@@ -1,0 +1,44 @@
+extern func print_int(int) void;
+extern func print_string(string) void;
+
+package forloop {
+
+    var a [13]int;
+    var size int = 13;
+    
+    func main() int {
+         init_array();
+         print_array();
+         sort_array(0, 1);
+         print_array();
+    }
+
+    func init_array() void {
+        var i int;
+        for (i = 0; i < size; i = i+1) {
+            a[i] = (-i*23)%13;
+        }
+    }
+
+    func sort_array(x int, y int) bool {
+        var tmp int;
+        for(tmp=0; (a[x] > a[y]) ||
+                    y < size-1 && (sort_array(x,y+1)) ||
+                    x < size-2 && sort_array(x+1, x+2);
+            tmp = a[x], a[x] = a[y], a[y] = tmp) {}
+        return (false);
+    }
+
+    func print_array() void {
+        var x,y int;
+        print_string("a=[");
+        for (x=0, y=0; y < size-1; x = print_element(y), y = y+1) {}
+        print_int(a[y]);
+        print_string("]\n");
+    }
+
+    func print_element(x int) int {
+        print_int(a[x]);
+        print_string(",");
+    }
+}

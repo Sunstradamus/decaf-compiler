@@ -1,0 +1,54 @@
+; ModuleID = 'DivByZero'
+
+declare void @print_int(i32)
+
+define i32 @main() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  %y = alloca i32
+  store i32 0, i32* %y
+  store i32 5, i32* %x
+  store i32 0, i32* %y
+  %ld_x = load i32, i32* %x
+  %lttmp = icmp slt i32 %ld_x, 6
+  br i1 %lttmp, label %or_end, label %or_right
+
+or_right:                                         ; preds = %entry
+  %ld_x1 = load i32, i32* %x
+  %ld_y = load i32, i32* %y
+  %divtmp = sdiv i32 %ld_x1, %ld_y
+  %eqtmp = icmp eq i32 %divtmp, 0
+  %ortmp = or i1 %lttmp, %eqtmp
+  br label %or_end
+
+or_end:                                           ; preds = %or_right, %entry
+  %orphi = phi i1 [ %lttmp, %entry ], [ %ortmp, %or_right ]
+  br i1 %orphi, label %then, label %endif
+
+then:                                             ; preds = %or_end
+  %ld_x2 = load i32, i32* %x
+  call void @print_int(i32 %ld_x2)
+  br label %endif
+
+endif:                                            ; preds = %then, %or_end
+  %ld_x3 = load i32, i32* %x
+  %lttmp4 = icmp slt i32 %ld_x3, 5
+  br i1 %lttmp4, label %and_right, label %and_end
+
+and_right:                                        ; preds = %endif
+  %andtmp = and i1 %lttmp4, undef
+  br label %and_end
+
+and_end:                                          ; preds = %and_right, %endif
+  %andphi = phi i1 [ %lttmp4, %endif ], [ %andtmp, %and_right ]
+  br i1 %andphi, label %then5, label %endif7
+
+then5:                                            ; preds = %and_end
+  %ld_y6 = load i32, i32* %y
+  call void @print_int(i32 %ld_y6)
+  br label %endif7
+
+endif7:                                           ; preds = %then5, %and_end
+  ret i32 0
+}

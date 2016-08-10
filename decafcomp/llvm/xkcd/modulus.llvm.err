@@ -1,0 +1,31 @@
+; ModuleID = 'modulus'
+
+@cstrtmp = private unnamed_addr constant [2 x i8] c"\0A\00"
+@cstrtmp.1 = private unnamed_addr constant [2 x i8] c"\0A\00"
+@cstrtmp.2 = private unnamed_addr constant [2 x i8] c"\0A\00"
+@cstrtmp.3 = private unnamed_addr constant [2 x i8] c"\0A\00"
+
+declare void @print_int(i32)
+
+declare void @print_string(i8*)
+
+define i32 @main() {
+entry:
+  call void @print_int(i32 1)
+  call void @print_int(i32 2)
+  call void @print_int(i32 0)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp, i32 0, i32 0))
+  call void @print_int(i32 2)
+  call void @print_int(i32 1)
+  call void @print_int(i32 0)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.1, i32 0, i32 0))
+  call void @print_int(i32 -2)
+  call void @print_int(i32 -1)
+  call void @print_int(i32 0)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.2, i32 0, i32 0))
+  call void @print_int(i32 -1)
+  call void @print_int(i32 -2)
+  call void @print_int(i32 0)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.3, i32 0, i32 0))
+  ret i32 0
+}

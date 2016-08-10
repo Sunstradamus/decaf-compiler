@@ -43,7 +43,7 @@ Ltmp5:
 	leaq	L_cstrtmp.2(%rip), %rbx
 	jmp	LBB1_1
 	.align	4, 0x90
-LBB1_6:                                 ## %endif
+LBB1_6:                                 ## %forassign
                                         ##   in Loop: Header=BB1_1 Depth=1
 	incl	12(%rsp)
 LBB1_1:                                 ## %forcond
@@ -62,6 +62,16 @@ LBB1_1:                                 ## %forcond
 	movl	12(%rsp), %eax
 	subl	20(%rsp), %eax
 	incl	%eax
+	cltq
+	imulq	$1717986919, %rax, %rcx ## imm = 0x66666667
+	movq	%rcx, %rdx
+	shrq	$63, %rdx
+	sarq	$35, %rcx
+	addl	%edx, %ecx
+	shll	$2, %ecx
+	leal	(%rcx,%rcx,4), %ecx
+	subl	%ecx, %eax
+	addl	$20, %eax
 	cltq
 	imulq	$1717986919, %rax, %rcx ## imm = 0x66666667
 	movq	%rcx, %rdx
@@ -113,6 +123,15 @@ LBB2_2:                                 ## %forbody
                                         ##   in Loop: Header=BB2_1 Depth=1
 	movslq	-8(%rsp), %rcx
 	imull	$2382983, %ecx, %edx    ## imm = 0x245C87
+	movslq	%edx, %rdx
+	imulq	$1374389535, %rdx, %rsi ## imm = 0x51EB851F
+	movq	%rsi, %rdi
+	shrq	$63, %rdi
+	sarq	$37, %rsi
+	addl	%edi, %esi
+	imull	$100, %esi, %esi
+	subl	%esi, %edx
+	addl	$100, %edx
 	movslq	%edx, %rdx
 	imulq	$1374389535, %rdx, %rsi ## imm = 0x51EB851F
 	movq	%rsi, %rdi

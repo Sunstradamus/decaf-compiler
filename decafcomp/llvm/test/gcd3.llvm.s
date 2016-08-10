@@ -40,6 +40,9 @@ Ltmp2:
 	movl	4(%rsp), %eax
 	cltd
 	idivl	%edi
+	leal	(%rdx,%rdi), %eax
+	cltd
+	idivl	%edi
 	movl	%edx, %esi
 	callq	_gcd
 	popq	%rcx

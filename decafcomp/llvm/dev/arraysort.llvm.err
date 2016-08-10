@@ -1,0 +1,201 @@
+; ModuleID = 'forloop'
+
+@size = global i32 13
+@a = global [13 x i32] zeroinitializer
+@cstrtmp = private unnamed_addr constant [4 x i8] c"a=[\00"
+@cstrtmp.1 = private unnamed_addr constant [3 x i8] c"]\0A\00"
+@cstrtmp.2 = private unnamed_addr constant [2 x i8] c",\00"
+
+declare void @print_int(i32)
+
+declare void @print_string(i8*)
+
+define i32 @main() {
+entry:
+  call void @init_array()
+  call void @print_array()
+  %calltmp = call i1 @sort_array(i32 0, i32 1)
+  call void @print_array()
+  ret i32 0
+}
+
+define void @init_array() {
+entry:
+  %i = alloca i32
+  store i32 0, i32* %i
+  store i32 0, i32* %i
+  br label %forcond
+
+forcond:                                          ; preds = %forassign, %entry
+  %ld_i = load i32, i32* %i
+  %ld_size = load i32, i32* @size
+  %lttmp = icmp slt i32 %ld_i, %ld_size
+  br i1 %lttmp, label %forbody, label %endfor
+
+forbody:                                          ; preds = %forcond
+  %ld_i1 = load i32, i32* %i
+  %arrayindex = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_i1
+  %ld_i2 = load i32, i32* %i
+  %negtmp = sub i32 0, %ld_i2
+  %multmp = mul i32 %negtmp, 23
+  %mod_1part = srem i32 %multmp, 13
+  %mod_2part = add i32 13, %mod_1part
+  %mod_3part = srem i32 %mod_2part, 13
+  store i32 %mod_3part, i32* %arrayindex
+  br label %forassign
+
+forassign:                                        ; preds = %forbody
+  %ld_i3 = load i32, i32* %i
+  %addtmp = add i32 %ld_i3, 1
+  store i32 %addtmp, i32* %i
+  br label %forcond
+
+endfor:                                           ; preds = %forcond
+  ret void
+}
+
+define i1 @sort_array(i32, i32) {
+entry:
+  %x = alloca i32
+  store i32 %0, i32* %x
+  %y = alloca i32
+  store i32 %1, i32* %y
+  %tmp = alloca i32
+  store i32 0, i32* %tmp
+  store i32 0, i32* %tmp
+  br label %forcond
+
+forcond:                                          ; preds = %forassign, %entry
+  %ld_x = load i32, i32* %x
+  %arrayindex = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_x
+  %ld_a = load i32, i32* %arrayindex
+  %ld_y = load i32, i32* %y
+  %arrayindex1 = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_y
+  %ld_a2 = load i32, i32* %arrayindex1
+  %gttmp = icmp sgt i32 %ld_a, %ld_a2
+  br i1 %gttmp, label %or_end, label %or_right
+
+or_right:                                         ; preds = %forcond
+  %ld_y3 = load i32, i32* %y
+  %ld_size = load i32, i32* @size
+  %subtmp = sub i32 %ld_size, 1
+  %lttmp = icmp slt i32 %ld_y3, %subtmp
+  br i1 %lttmp, label %and_right, label %and_end
+
+and_right:                                        ; preds = %or_right
+  %ld_x4 = load i32, i32* %x
+  %ld_y5 = load i32, i32* %y
+  %addtmp = add i32 %ld_y5, 1
+  %calltmp = call i1 @sort_array(i32 %ld_x4, i32 %addtmp)
+  %andtmp = and i1 %lttmp, %calltmp
+  br label %and_end
+
+and_end:                                          ; preds = %and_right, %or_right
+  %andphi = phi i1 [ %lttmp, %or_right ], [ %andtmp, %and_right ]
+  %ortmp = or i1 %gttmp, %andphi
+  br label %or_end
+
+or_end:                                           ; preds = %and_end, %forcond
+  %orphi = phi i1 [ %gttmp, %forcond ], [ %ortmp, %and_end ]
+  br i1 %orphi, label %or_end21, label %or_right6
+
+or_right6:                                        ; preds = %or_end
+  %ld_x7 = load i32, i32* %x
+  %ld_size8 = load i32, i32* @size
+  %subtmp9 = sub i32 %ld_size8, 2
+  %lttmp10 = icmp slt i32 %ld_x7, %subtmp9
+  br i1 %lttmp10, label %and_right11, label %and_end18
+
+and_right11:                                      ; preds = %or_right6
+  %ld_x12 = load i32, i32* %x
+  %addtmp13 = add i32 %ld_x12, 1
+  %ld_x14 = load i32, i32* %x
+  %addtmp15 = add i32 %ld_x14, 2
+  %calltmp16 = call i1 @sort_array(i32 %addtmp13, i32 %addtmp15)
+  %andtmp17 = and i1 %lttmp10, %calltmp16
+  br label %and_end18
+
+and_end18:                                        ; preds = %and_right11, %or_right6
+  %andphi19 = phi i1 [ %lttmp10, %or_right6 ], [ %andtmp17, %and_right11 ]
+  %ortmp20 = or i1 %orphi, %andphi19
+  br label %or_end21
+
+or_end21:                                         ; preds = %and_end18, %or_end
+  %orphi22 = phi i1 [ %orphi, %or_end ], [ %ortmp20, %and_end18 ]
+  br i1 %orphi22, label %forbody, label %endfor
+
+forbody:                                          ; preds = %or_end21
+  br label %forassign
+
+forassign:                                        ; preds = %forbody
+  %ld_x23 = load i32, i32* %x
+  %arrayindex24 = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_x23
+  %ld_a25 = load i32, i32* %arrayindex24
+  store i32 %ld_a25, i32* %tmp
+  %ld_x26 = load i32, i32* %x
+  %arrayindex27 = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_x26
+  %ld_y28 = load i32, i32* %y
+  %arrayindex29 = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_y28
+  %ld_a30 = load i32, i32* %arrayindex29
+  store i32 %ld_a30, i32* %arrayindex27
+  %ld_y31 = load i32, i32* %y
+  %arrayindex32 = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_y31
+  %ld_tmp = load i32, i32* %tmp
+  store i32 %ld_tmp, i32* %arrayindex32
+  br label %forcond
+
+endfor:                                           ; preds = %or_end21
+  ret i1 false
+  ret i1 false
+}
+
+define void @print_array() {
+entry:
+  %x = alloca i32
+  store i32 0, i32* %x
+  %y = alloca i32
+  store i32 0, i32* %y
+  call void @print_string(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @cstrtmp, i32 0, i32 0))
+  store i32 0, i32* %x
+  store i32 0, i32* %y
+  br label %forcond
+
+forcond:                                          ; preds = %forassign, %entry
+  %ld_y = load i32, i32* %y
+  %ld_size = load i32, i32* @size
+  %subtmp = sub i32 %ld_size, 1
+  %lttmp = icmp slt i32 %ld_y, %subtmp
+  br i1 %lttmp, label %forbody, label %endfor
+
+forbody:                                          ; preds = %forcond
+  br label %forassign
+
+forassign:                                        ; preds = %forbody
+  %ld_y1 = load i32, i32* %y
+  %calltmp = call i32 @print_element(i32 %ld_y1)
+  store i32 %calltmp, i32* %x
+  %ld_y2 = load i32, i32* %y
+  %addtmp = add i32 %ld_y2, 1
+  store i32 %addtmp, i32* %y
+  br label %forcond
+
+endfor:                                           ; preds = %forcond
+  %ld_y3 = load i32, i32* %y
+  %arrayindex = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_y3
+  %ld_a = load i32, i32* %arrayindex
+  call void @print_int(i32 %ld_a)
+  call void @print_string(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @cstrtmp.1, i32 0, i32 0))
+  ret void
+}
+
+define i32 @print_element(i32) {
+entry:
+  %x = alloca i32
+  store i32 %0, i32* %x
+  %ld_x = load i32, i32* %x
+  %arrayindex = getelementptr i32, i32* getelementptr inbounds ([13 x i32], [13 x i32]* @a, i32 0, i32 0), i32 %ld_x
+  %ld_a = load i32, i32* %arrayindex
+  call void @print_int(i32 %ld_a)
+  call void @print_string(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @cstrtmp.2, i32 0, i32 0))
+  ret i32 0
+}
