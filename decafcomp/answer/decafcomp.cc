@@ -1316,7 +1316,7 @@ public:
 		if (Op->str().compare("Rightshift") == 0) {
 			assert(L->getType()->isIntegerTy());
 			assert(R->getType()->isIntegerTy());
-			return Builder.CreateAShr(L, R, "rshtmp");
+			return Builder.CreateLShr(L, R, "rshtmp");
 		}
 		if (Op->str().compare("Leftshift") == 0) {
 			assert(L->getType()->isIntegerTy());
